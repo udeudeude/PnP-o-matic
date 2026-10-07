@@ -4,16 +4,16 @@ import XCTest
 
 final class ImpositionTests: XCTestCase {
     func testBuiltInCardSizesAreExact() {
-        let poker = PnPCardSizePreset.poker.fixedSize
-        let bridge = PnPCardSizePreset.bridge.fixedSize
-        let euro = PnPCardSizePreset.euro.fixedSize
+        let poker = try XCTUnwrap(PnPCardSizePreset.poker.fixedSize)
+        let bridge = try XCTUnwrap(PnPCardSizePreset.bridge.fixedSize)
+        let euro = try XCTUnwrap(PnPCardSizePreset.euro.fixedSize)
 
-        XCTAssertEqual(poker?.width, 180, accuracy: 0.0001)
-        XCTAssertEqual(poker?.height, 252, accuracy: 0.0001)
-        XCTAssertEqual(bridge?.width, 162, accuracy: 0.0001)
-        XCTAssertEqual(bridge?.height, 252, accuracy: 0.0001)
-        XCTAssertEqual(euro?.width, 59 * 72 / 25.4, accuracy: 0.0001)
-        XCTAssertEqual(euro?.height, 92 * 72 / 25.4, accuracy: 0.0001)
+        XCTAssertEqual(poker.width, 180, accuracy: 0.0001)
+        XCTAssertEqual(poker.height, 252, accuracy: 0.0001)
+        XCTAssertEqual(bridge.width, 162, accuracy: 0.0001)
+        XCTAssertEqual(bridge.height, 252, accuracy: 0.0001)
+        XCTAssertEqual(euro.width, CGFloat(59 * 72 / 25.4), accuracy: 0.0001)
+        XCTAssertEqual(euro.height, CGFloat(92 * 72 / 25.4), accuracy: 0.0001)
     }
 
     func testAllBuiltInPresetsFitNineUpOnLetter() {
