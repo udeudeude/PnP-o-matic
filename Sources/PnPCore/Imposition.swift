@@ -85,10 +85,13 @@ public enum PnPError: LocalizedError {
 
 public enum PnPImposer {
     public static func sourceOrder(pageCounts: [Int]) -> [(document: Int, page: Int)] {
-        pageCounts.enumerated().flatMap { documentIndex, count in
-            guard count > 0 else { return [] }
-            return (0..<count).map { (document: documentIndex, page: $0) }
+        var result: [(document: Int, page: Int)] = []
+        for (documentIndex, count) in pageCounts.enumerated() where count > 0 {
+            for pageIndex in 0..<count {
+                result.append((document: documentIndex, page: pageIndex))
+            }
         }
+        return result
     }
 
     public static func gridGeometry(cardSize: CGSize, sheetSize: CGSize) -> PnPGridGeometry {
