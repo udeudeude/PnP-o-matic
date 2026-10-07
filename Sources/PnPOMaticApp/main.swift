@@ -223,27 +223,30 @@ final class PreviewGrid {
         target: AnyObject?,
         action: Selector
     ) {
+        titleLabel = NSTextField(labelWithString: title)
+        detailLabel = NSTextField(wrappingLabelWithString: detail)
+        addButton = NSButton(title: buttonTitle, target: target, action: action)
+
+        var builtSlots: [CardSlotView] = []
+        for _ in 0..<9 {
+            builtSlots.append(CardSlotView())
+        }
+        slots = builtSlots
+
+        let rows = stride(from: 0, to: 9, by: 3).map { rowStart in
+            Array(builtSlots[rowStart..<(rowStart + 3)]).map { $0 as NSView }
+        }
+        grid = NSGridView(views: rows)
+
         container.orientation = .vertical
         container.alignment = .leading
         container.spacing = 8
 
-        titleLabel = NSTextField(labelWithString: title)
         titleLabel.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
 
-        detailLabel = NSTextField(wrappingLabelWithString: detail)
         detailLabel.textColor = .secondaryLabelColor
         detailLabel.font = NSFont.systemFont(ofSize: 11)
 
-        addButton = NSButton(title: buttonTitle, target: target, action: action)
-
-        for _ in 0..<9 {
-            slots.append(CardSlotView())
-        }
-
-        let rows = stride(from: 0, to: 9, by: 3).map { rowStart in
-            Array(slots[rowStart..<(rowStart + 3)]).map { $0 as NSView }
-        }
-        grid = NSGridView(views: rows)
         grid.rowSpacing = 6
         grid.columnSpacing = 6
 
