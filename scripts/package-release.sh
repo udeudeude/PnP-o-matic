@@ -43,7 +43,7 @@ h1{font-size:34px}.box{border:1px solid #9996;border-radius:12px;padding:18px 22
 </head>
 <body>
 <h1>PnP-o-matic $VERSION</h1>
-<p>Turn PDFs with one card per page into print-ready 3×3 sheets.</p>
+<p>Build duplex-ready 3×3 print-and-play card sheets from PDFs and image files.</p>
 <div class="box">
 <h2>Install</h2>
 <ol>
@@ -54,14 +54,16 @@ h1{font-size:34px}.box{border:1px solid #9996;border-radius:12px;padding:18px 22
 </div>
 <h2>Use</h2>
 <ol>
-<li>Drop a PDF into the window. Each page is one card.</li>
-<li>Drop additional PDFs to append their cards.</li>
-<li>Choose a finished card size: Poker 2.5 × 3.5 in, Bridge 2.25 × 3.5 in, Euro 59 × 92 mm, PDF page size, or Custom.</li>
-<li>Choose US Letter or A4.</li>
-<li>Choose <strong>Edge marks only</strong> or <strong>Full-page cut lines</strong>.</li>
-<li>Click <strong>Make 9-Up PDF</strong>. The result opens in Preview.</li>
+<li>Add front cards with <strong>Add Fronts…</strong>, by dropping PDF/image files onto front slots, or by opening files with the app.</li>
+<li>Add matching backs with <strong>Add Backs…</strong>. Page 1 pairs with front 1, page 2 with front 2, and so on.</li>
+<li>For front-back-front-back PDFs, choose <strong>Import Alternating Front / Back PDF…</strong>.</li>
+<li>Drag numbered slots to rearrange cards. Leave the front/back lock on to move pairs together, or switch it off to rearrange one side independently.</li>
+<li>Choose Poker, Bridge, Euro, source-page, or custom finished card size.</li>
+<li>Choose US Letter or A4 and edge-only or full-page cut lines.</li>
+<li>Choose long-edge duplex for normal portrait book-style flipping. The back grid mirrors columns automatically.</li>
+<li>Click <strong>Make Duplex 9-Up PDF</strong>. The result opens in Preview.</li>
 </ol>
-<p>Poker size is the default. Built-in Poker, Bridge, and Euro presets define the finished cut size exactly and fit 3×3 at full size on Letter and A4. Source artwork is scaled proportionally without distortion.</p>
+<p>The previews are numbered to show physical duplex placement. With long-edge duplex, fronts read 1-2-3 / 4-5-6 / 7-8-9 and backs read 3-2-1 / 6-5-4 / 9-8-7. Artwork is not mirrored; only back positions are rearranged.</p>
 <p>Requires macOS 11 Big Sur or later. Universal Intel + Apple Silicon release.</p>
 </body>
 </html>

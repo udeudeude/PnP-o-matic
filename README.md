@@ -1,46 +1,77 @@
 # PnP-o-matic
 
-A native macOS utility for turning PDFs with **one card per page** into print-ready **3×3 card sheets**.
+A native macOS print-and-play layout utility for building duplex-ready **3×3 card sheets** from PDFs and image files.
 
-## What it does
+## Workspace
 
-- Places pages 1–9 on sheet 1, pages 10–18 on sheet 2, and so on.
-- Lets you add a second, third, or later PDF; every new PDF is appended after the cards already loaded.
-- Supports **US Letter** and **A4**.
-- Defaults to **Poker size: 2.5 × 3.5 in** finished cards.
-- Includes **Bridge: 2.25 × 3.5 in** and **Euro: 59 × 92 mm** presets.
-- Can instead use the source PDF page size or a custom width × height in inches or millimetres.
-- The selected preset defines the finished cut rectangle; source artwork scales proportionally into it without distortion.
-- Uniformly reduces the requested size only if a 3×3 grid cannot fit on the selected sheet.
-- Opens the finished PDF in Preview.
+PnP-o-matic shows **Fronts** and **Backs** side by side as numbered 3×3 previews.
 
-### Cut-line modes
+- Front slots are numbered **1-2-3 / 4-5-6 / 7-8-9**.
+- With normal portrait **long-edge duplex**, the back preview is physically mirrored as **3-2-1 / 6-5-4 / 9-8-7** so each printed back lands behind its corresponding front.
+- A **short-edge duplex** option mirrors rows instead.
+- Back artwork itself is not mirrored. Only its sheet position changes.
 
-**Edge marks only**
+Use the sheet arrows to move through cards 10-18, 19-27, and so on.
 
-Cut coordinates appear only in the margins outside the card grid. No guide line runs through card artwork.
+## Adding cards
 
-**Full-page cut lines**
+You can:
 
-Thin horizontal and vertical cut lines extend across the complete sheet at every card boundary.
+- Drop a PDF or image directly onto any numbered front or back slot.
+- Drop a multi-page PDF onto a slot to fill that slot and the following slots.
+- Use **Add Fronts…** to append a PDF containing all card fronts.
+- Use **Add Backs…** to add a separate PDF containing all card backs. Pages pair with the corresponding front card number.
+- Use **Import Alternating Front / Back PDF…** for PDFs ordered front, back, front, back.
+- Add later PDFs or image files and continue the sequence.
+
+Supported images are the image formats macOS can read through ImageIO.
+
+## Rearranging cards
+
+Drag an occupied slot to another numbered slot to rearrange it.
+
+The **Lock corresponding fronts and backs while rearranging** switch is on by default:
+
+- **On:** moving either side moves the whole front/back pair.
+- **Off:** fronts and backs can be reordered independently.
+
+Right-click a slot and choose **Clear This Slot** to remove its contents.
 
 ## Card sizes
 
 The **Card size** menu offers:
 
-- **Poker — 2.5 × 3.5 in** (default)
-- **Bridge — 2.25 × 3.5 in**
-- **Euro — 59 × 92 mm**
+- **Poker - 2.5 × 3.5 in** (default)
+- **Bridge - 2.25 × 3.5 in**
+- **Euro - 59 × 92 mm**
 - **Use PDF page size**
 - **Custom…** with inches or millimetres
 
-The three built-in card presets fit 3×3 at full size on both US Letter and A4.
+The preset defines the finished cut rectangle. Source artwork is fitted proportionally without distortion.
 
-## Input order
+The built-in Poker, Bridge, and Euro presets fit 3×3 at full size on both US Letter and A4.
 
-Files are imposed in the order shown in the PnP-o-matic window. Additional drops append to the existing list rather than replacing it.
+## Cut-line modes
 
-For example, 12 pages of heroes, 8 pages of items, and 5 pages of tokens become one 25-card sequence and three 9-up sheets.
+**Edge marks only**
+
+Thin cut marks appear only in the margins beyond the cards. No guide line crosses the card artwork.
+
+**Full-page cut lines**
+
+Thin horizontal and vertical cut lines run across the complete sheet at every card boundary.
+
+## Output
+
+When fronts and backs are present, output pages alternate:
+
+1. Front sheet 1
+2. Back sheet 1, mirrored for the selected duplex flip
+3. Front sheet 2
+4. Back sheet 2
+5. and so on
+
+The generated PDF opens in Preview.
 
 ## Compatibility
 
@@ -48,11 +79,11 @@ For example, 12 pages of heroes, 8 pages of items, and 5 pages of tokens become 
 - Intel Macs
 - Apple Silicon Macs
 
-The release build is universal.
+CI builds a universal Intel + Apple Silicon app and verifies the macOS 11 deployment target.
 
 ## Development
 
     swift test
     MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --product PnPOMaticApp
 
-The app uses AppKit, PDFKit, Core Graphics, Foundation, and Uniform Type Identifiers with no third-party runtime dependencies.
+The app uses AppKit, PDFKit, Core Graphics, ImageIO, Foundation, and Uniform Type Identifiers with no third-party runtime dependencies.

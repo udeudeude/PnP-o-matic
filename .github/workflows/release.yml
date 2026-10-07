@@ -53,4 +53,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ASSET="dist/PnP-o-matic-v$VERSION.zip"
-          gh release create "v$VERSION" "$ASSET"             --title "PnP-o-matic v$VERSION"             --notes "First PnP-o-matic release: 3×3 card imposition for one-card-per-page PDFs, appendable multi-PDF input, Letter/A4 output, and both edge-only crop marks and full-page cut lines. macOS 11+; universal Intel + Apple Silicon build."
+          gh release create "v$VERSION" "$ASSET"             --title "PnP-o-matic v$VERSION"             --notes "PnP-o-matic 0.2 adds paired front/back previews, duplex-correct back mirroring, drag-and-drop PDF and image slots, separate-front/separate-back and alternating PDF import, drag reordering, and optional front/back pair locking. Includes Poker, Bridge, Euro, source-page, and custom card sizes; Letter/A4 output; edge-only or full-page cut lines; macOS 11+ universal Intel + Apple Silicon build."

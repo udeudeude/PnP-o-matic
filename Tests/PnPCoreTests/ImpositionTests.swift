@@ -3,6 +3,21 @@ import XCTest
 @testable import PnPCore
 
 final class ImpositionTests: XCTestCase {
+    func testLongEdgeBackMirrorsColumns() {
+        XCTAssertEqual(
+            (0..<9).map { PnPImposer.mirroredSlot($0, flip: .longEdge) },
+            [2, 1, 0, 5, 4, 3, 8, 7, 6]
+        )
+    }
+
+    func testShortEdgeBackMirrorsRows() {
+        XCTAssertEqual(
+            (0..<9).map { PnPImposer.mirroredSlot($0, flip: .shortEdge) },
+            [6, 7, 8, 3, 4, 5, 0, 1, 2]
+        )
+    }
+
+
     func testBuiltInCardSizesAreExact() throws {
         let poker = try XCTUnwrap(PnPCardSizePreset.poker.fixedSize)
         let bridge = try XCTUnwrap(PnPCardSizePreset.bridge.fixedSize)
