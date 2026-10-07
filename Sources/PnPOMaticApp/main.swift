@@ -57,12 +57,17 @@ final class MainWindowController: NSWindowController, NSTableViewDataSource, NST
     private let tableView = NSTableView()
     private let statusLabel = NSTextField(labelWithString: "No PDFs yet")
     private let makeButton = NSButton(title: "Make 9-Up PDF", target: nil, action: nil)
+    private let cardSizePopup = NSPopUpButton()
+    private let customWidthField = NSTextField(string: "2.5")
+    private let customHeightField = NSTextField(string: "3.5")
+    private let customUnitPopup = NSPopUpButton()
+    private let customSizeControls = NSStackView()
     private let paperPopup = NSPopUpButton()
     private let cutPopup = NSPopUpButton()
 
     init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 680, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 610),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -195,6 +200,41 @@ final class MainWindowController: NSWindowController, NSTableViewDataSource, NST
         listButtons.addArrangedSubview(clearButton)
         root.addArrangedSubview(listButtons)
 
+        let cardOptions = NSStackView()
+        cardOptions.orientation = .horizontal
+        cardOptions.alignment = .centerY
+        cardOptions.spacing = 10
+
+        cardOptions.addArrangedSubview(NSTextField(labelWithString: "Card size:"))
+        cardSizePopup.addItems(withTitles: PnPCardSizePreset.allCases.map(\.displayName))
+        cardSizePopup.selectItem(at: 1)
+        cardSizePopup.target = self
+        cardSizePopup.action = #selector(cardSizeChanged)
+        cardOptions.addArrangedSubview(cardSizePopup)
+
+        customSizeControls.orientation = .horizontal
+        customSizeControls.alignment = .centerY
+        customSizeControls.spacing = 6
+
+        customWidthField.alignment = .right
+        customHeightField.alignment = .right
+        customWidthField.translatesAutoresizingMaskIntoConstraints = false
+        customHeightField.translatesAutoresizingMaskIntoConstraints = false
+        customWidthField.widthAnchor.constraint(equalToConstant: 54).isActive = true
+        customHeightField.widthAnchor.constraint(equalToConstant: 54).isActive = true
+
+        customUnitPopup.addItems(withTitles: ["in", "mm"])
+
+        customSizeControls.addArrangedSubview(NSTextField(labelWithString: "W"))
+        customSizeControls.addArrangedSubview(customWidthField)
+        customSizeControls.addArrangedSubview(NSTextField(labelWithString: "× H"))
+        customSizeControls.addArrangedSubview(customHeightField)
+        customSizeControls.addArrangedSubview(customUnitPopup)
+        customSizeControls.isHidden = true
+
+        cardOptions.addArrangedSubview(customSizeControls)
+        root.addArrangedSubview(cardOptions)
+
         let options = NSStackView()
         options.orientation = .horizontal
         options.alignment = .centerY
@@ -283,9 +323,37 @@ final class MainWindowController: NSWindowController, NSTableViewDataSource, NST
         updateStatus()
     }
 
+    @objc private func cardSizeChanged() {
+        let preset = PnPCardSizePreset.allCases[cardSizePopup.indexOfSelectedItem]
+        customSizeControls.isHidden = preset != .custom
+    }
+
     @objc private func makePDF() {
         let paper = PnPPaperSize.allCases[paperPopup.indexOfSelectedItem]
         let cutStyle: PnPCutStyle = cutPopup.indexOfSelectedItem == 0 ? .edgeMarks : .fullLines
+        let cardSizePreset = PnPCardSizePreset.allCases[cardSizePopup.indexOfSelectedItem]
+
+        var customCardSize: CGSize?
+        if cardSizePreset == .custom {
+            guard let width = Double(customWidthField.stringValue),
+                  let height = Double(customHeightField.stringValue),
+                  width > 0,
+                  height > 0 else {
+                showAlert(
+                    message: "Invalid custom card size",
+                    detail: "Enter positive numbers for width and height."
+                )
+                return
+            }
+
+            let pointsPerUnit: Double = customUnitPopup.indexOfSelectedItem == 0
+                ? 72
+                : 72 / 25.4
+            customCardSize = CGSize(
+                width: width * pointsPerUnit,
+                height: height * pointsPerUnit
+            )
+        }
 
         let outputDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("PnP-o-matic", isDirectory: true)
@@ -303,13 +371,16 @@ final class MainWindowController: NSWindowController, NSTableViewDataSource, NST
                 inputURLs: inputs.map(\.url),
                 outputURL: outputURL,
                 paperSize: paper,
-                cutStyle: cutStyle
+                cutStyle: cutStyle,
+                cardSizePreset: cardSizePreset,
+                customCardSize: customCardSize
             )
             temporaryOutputs.append(outputURL)
 
             let percent = Int((result.scale * 100).rounded())
             let sheetWord = result.sheetCount == 1 ? "sheet" : "sheets"
-            statusLabel.stringValue = "Created \(result.sheetCount) \(sheetWord) • cards at \(percent)% • opening Preview"
+            let sizeLabel = cardSizePreset.displayName
+            statusLabel.stringValue = "Created \(result.sheetCount) \(sheetWord) • \(sizeLabel) • \(percent)% • opening Preview"
             openInPreview(outputURL)
         } catch {
             showAlert(message: "Could not make 9-Up PDF", detail: error.localizedDescription)
