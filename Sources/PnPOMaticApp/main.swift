@@ -75,8 +75,8 @@ final class CardSlotView: NSView, NSDraggingSource {
         addSubview(sourceLabel)
 
         NSLayoutConstraint.activate([
-            widthAnchor.constraint(equalToConstant: 112),
-            heightAnchor.constraint(equalToConstant: 156),
+            widthAnchor.constraint(equalToConstant: 88),
+            heightAnchor.constraint(equalToConstant: 124),
 
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 5),
             imageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
@@ -302,13 +302,13 @@ final class MainWindowController: NSWindowController {
         )
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 980, height: 760),
+            contentRect: NSRect(x: 0, y: 0, width: 920, height: 760),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "PnP-o-matic"
-        window.minSize = NSSize(width: 900, height: 700)
+        window.minSize = NSSize(width: 820, height: 680)
 
         super.init(window: window)
 
