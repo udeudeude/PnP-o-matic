@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: macos-14
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v7
 
@@ -20,11 +20,30 @@ jobs:
       - name: Test
         run: swift test -Xswiftc -warnings-as-errors
 
-      - name: Build for macOS 11+
-        run: MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --product PnPOMaticApp -Xswiftc -warnings-as-errors
+      - name: Build universal app for macOS 11+
+        run: |
+          MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --arch x86_64 --product PnPOMaticApp --build-path .build-x86 -Xswiftc -warnings-as-errors
+          MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --arch arm64 --product PnPOMaticApp --build-path .build-arm -Xswiftc -warnings-as-errors
+
+          X86="$(swift build -c release --arch x86_64 --build-path .build-x86 --show-bin-path)/PnPOMaticApp"
+          ARM="$(swift build -c release --arch arm64 --build-path .build-arm --show-bin-path)/PnPOMaticApp"
+          UNIVERSAL="$RUNNER_TEMP/PnPOMaticApp"
+
+          lipo -create "$X86" "$ARM" -output "$UNIVERSAL"
+          ARCHS="$(lipo -archs "$UNIVERSAL")"
+          [[ "$ARCHS" == *x86_64* ]]
+          [[ "$ARCHS" == *arm64* ]]
+
+          for ARCH in x86_64 arm64; do
+            THIN="$RUNNER_TEMP/PnPOMaticApp-$ARCH"
+            lipo "$UNIVERSAL" -thin "$ARCH" -output "$THIN"
+            otool -l "$THIN" | grep -A3 LC_BUILD_VERSION | grep -q 'minos 11.0'
+          done
+
+          echo "UNIVERSAL=$UNIVERSAL" >> "$GITHUB_ENV"
 
       - name: Package
-        run: PNPOMATIC_BUILD="$PWD/.build/release/PnPOMaticApp" zsh scripts/package-release.sh
+        run: PNPOMATIC_BUILD="$UNIVERSAL" zsh scripts/package-release.sh
 
       - name: Verify package
         run: |
@@ -42,6 +61,9 @@ jobs:
           test -x "$DIST/Uninstall PnP-o-matic.command"
           test -f "$DIST/START HERE.html"
           codesign --verify --deep --strict "$APP"
+          ARCHS="$(lipo -archs "$APP/Contents/MacOS/PnPOMaticApp")"
+          [[ "$ARCHS" == *x86_64* ]]
+          [[ "$ARCHS" == *arm64* ]]
 
       - uses: actions/upload-artifact@v4
         with:
