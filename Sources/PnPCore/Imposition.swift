@@ -1,6 +1,39 @@
 import CoreGraphics
 import Foundation
 import PDFKit
+import ImageIO
+
+
+public enum PnPCardSide: String, Equatable {
+    case front
+    case back
+}
+
+public enum PnPDuplexFlip: String, CaseIterable {
+    case longEdge
+    case shortEdge
+
+    public var displayName: String {
+        switch self {
+        case .longEdge: return "Long edge"
+        case .shortEdge: return "Short edge"
+        }
+    }
+}
+
+public enum PnPCardAsset: Equatable {
+    case pdfPage(url: URL, pageIndex: Int)
+    case image(url: URL)
+
+    public var sourceName: String {
+        switch self {
+        case .pdfPage(let url, let pageIndex):
+            return "\(url.lastPathComponent) • p. \(pageIndex + 1)"
+        case .image(let url):
+            return url.lastPathComponent
+        }
+    }
+}
 
 public enum PnPCardSizePreset: String, CaseIterable {
     case pdfPage
@@ -118,6 +151,33 @@ public enum PnPError: LocalizedError {
 }
 
 public enum PnPImposer {
+    public static func mirroredSlot(_ slot: Int, flip: PnPDuplexFlip) -> Int {
+        precondition((0..<9).contains(slot))
+        let row = slot / 3
+        let column = slot % 3
+
+        switch flip {
+        case .longEdge:
+            return row * 3 + (2 - column)
+        case .shortEdge:
+            return (2 - row) * 3 + column
+        }
+    }
+
+    public static func assets(from url: URL) -> [PnPCardAsset] {
+        if url.pathExtension.lowercased() == "pdf",
+           let document = PDFDocument(url: url) {
+            return (0..<document.pageCount).map {
+                .pdfPage(url: url, pageIndex: $0)
+            }
+        }
+
+        guard CGImageSourceCreateWithURL(url as CFURL, nil) != nil else {
+            return []
+        }
+        return [.image(url: url)]
+    }
+
     public static func sourceOrder(pageCounts: [Int]) -> [(document: Int, page: Int)] {
         var result: [(document: Int, page: Int)] = []
         for (documentIndex, count) in pageCounts.enumerated() where count > 0 {
@@ -165,31 +225,46 @@ public enum PnPImposer {
             throw PnPError.noInput
         }
 
-        let documents: [PDFDocument] = try inputURLs.map { url in
-            guard let document = PDFDocument(url: url) else {
-                throw PnPError.unreadablePDF(url)
-            }
-            guard document.pageCount > 0 else {
-                throw PnPError.emptyPDF(url)
-            }
-            return document
-        }
+        let fronts = inputURLs.flatMap { assets(from: $0) }.map(Optional.some)
+        return try impose(
+            fronts: fronts,
+            backs: [],
+            outputURL: outputURL,
+            paperSize: paperSize,
+            cutStyle: cutStyle,
+            cardSizePreset: cardSizePreset,
+            customCardSize: customCardSize,
+            duplexFlip: .longEdge
+        )
+    }
 
-        let order = sourceOrder(pageCounts: documents.map(\.pageCount))
-        guard let firstRef = order.first,
-              let firstPage = documents[firstRef.document].page(at: firstRef.page) else {
+    public static func impose(
+        fronts: [PnPCardAsset?],
+        backs: [PnPCardAsset?],
+        outputURL: URL,
+        paperSize: PnPPaperSize,
+        cutStyle: PnPCutStyle,
+        cardSizePreset: PnPCardSizePreset = .poker,
+        customCardSize: CGSize? = nil,
+        duplexFlip: PnPDuplexFlip = .longEdge
+    ) throws -> PnPResult {
+        let cardCount = max(fronts.count, backs.count)
+        guard cardCount > 0 else {
             throw PnPError.noInput
         }
 
-        let firstBounds = firstPage.bounds(for: .cropBox)
-        guard firstBounds.width > 0, firstBounds.height > 0 else {
+        let firstAsset = fronts.compactMap { $0 }.first ?? backs.compactMap { $0 }.first
+        guard let firstAsset,
+              let sourceSize = sourceSize(for: firstAsset),
+              sourceSize.width > 0,
+              sourceSize.height > 0 else {
             throw PnPError.invalidCardSize
         }
 
         let requestedCardSize: CGSize
         switch cardSizePreset {
         case .pdfPage:
-            requestedCardSize = firstBounds.size
+            requestedCardSize = sourceSize
         case .custom:
             guard let customCardSize,
                   customCardSize.width > 0,
@@ -216,38 +291,126 @@ public enum PnPImposer {
             throw PnPError.cannotCreateOutput(outputURL)
         }
 
-        for sheetStart in stride(from: 0, to: order.count, by: 9) {
-            context.beginPDFPage(nil)
+        let sheetCount = (cardCount + 8) / 9
+        let hasFronts = fronts.contains { $0 != nil }
+        let hasBacks = backs.contains { $0 != nil }
 
-            for slot in 0..<9 {
-                let sourceIndex = sheetStart + slot
-                guard sourceIndex < order.count else { continue }
+        for sheet in 0..<sheetCount {
+            let sheetStart = sheet * 9
 
-                let source = order[sourceIndex]
-                guard let page = documents[source.document].page(at: source.page) else {
-                    continue
+            if hasFronts {
+                context.beginPDFPage(nil)
+                for logicalSlot in 0..<9 {
+                    let cardIndex = sheetStart + logicalSlot
+                    guard fronts.indices.contains(cardIndex),
+                          let asset = fronts[cardIndex] else {
+                        continue
+                    }
+                    draw(
+                        asset: asset,
+                        in: geometry.frame(forSlot: logicalSlot),
+                        context: context
+                    )
                 }
-
-                draw(page: page, in: geometry.frame(forSlot: slot), context: context)
+                drawCutLines(
+                    cutStyle: cutStyle,
+                    geometry: geometry,
+                    sheetSize: sheetSize,
+                    context: context
+                )
+                context.endPDFPage()
             }
 
-            switch cutStyle {
-            case .edgeMarks:
-                drawEdgeMarks(geometry: geometry, sheetSize: sheetSize, context: context)
-            case .fullLines:
-                drawFullLines(geometry: geometry, sheetSize: sheetSize, context: context)
+            if hasBacks {
+                context.beginPDFPage(nil)
+                for logicalSlot in 0..<9 {
+                    let cardIndex = sheetStart + logicalSlot
+                    guard backs.indices.contains(cardIndex),
+                          let asset = backs[cardIndex] else {
+                        continue
+                    }
+                    let visualSlot = mirroredSlot(logicalSlot, flip: duplexFlip)
+                    draw(
+                        asset: asset,
+                        in: geometry.frame(forSlot: visualSlot),
+                        context: context
+                    )
+                }
+                drawCutLines(
+                    cutStyle: cutStyle,
+                    geometry: geometry,
+                    sheetSize: sheetSize,
+                    context: context
+                )
+                context.endPDFPage()
             }
-
-            context.endPDFPage()
         }
 
         context.closePDF()
 
         return PnPResult(
-            cardCount: order.count,
-            sheetCount: (order.count + 8) / 9,
+            cardCount: cardCount,
+            sheetCount: sheetCount,
             scale: geometry.scale
         )
+    }
+
+    private static func sourceSize(for asset: PnPCardAsset) -> CGSize? {
+        switch asset {
+        case .pdfPage(let url, let pageIndex):
+            guard let document = PDFDocument(url: url),
+                  let page = document.page(at: pageIndex) else {
+                return nil
+            }
+            return page.bounds(for: .cropBox).size
+
+        case .image(let url):
+            guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+                return nil
+            }
+            return CGSize(width: image.width, height: image.height)
+        }
+    }
+
+    private static func draw(asset: PnPCardAsset, in frame: CGRect, context: CGContext) {
+        switch asset {
+        case .pdfPage(let url, let pageIndex):
+            guard let document = PDFDocument(url: url),
+                  let page = document.page(at: pageIndex) else {
+                return
+            }
+            draw(page: page, in: frame, context: context)
+
+        case .image(let url):
+            guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+                return
+            }
+            draw(image: image, in: frame, context: context)
+        }
+    }
+
+    private static func draw(image: CGImage, in frame: CGRect, context: CGContext) {
+        let sourceSize = CGSize(width: image.width, height: image.height)
+        guard sourceSize.width > 0, sourceSize.height > 0 else { return }
+
+        let scale = min(frame.width / sourceSize.width, frame.height / sourceSize.height)
+        let drawnSize = CGSize(
+            width: sourceSize.width * scale,
+            height: sourceSize.height * scale
+        )
+        let target = CGRect(
+            x: frame.midX - drawnSize.width / 2,
+            y: frame.midY - drawnSize.height / 2,
+            width: drawnSize.width,
+            height: drawnSize.height
+        )
+
+        context.saveGState()
+        context.clip(to: frame)
+        context.draw(image, in: target)
+        context.restoreGState()
     }
 
     private static func draw(page: PDFPage, in frame: CGRect, context: CGContext) {
@@ -268,6 +431,20 @@ public enum PnPImposer {
         context.translateBy(x: -source.minX, y: -source.minY)
         page.draw(with: .cropBox, to: context)
         context.restoreGState()
+    }
+
+    private static func drawCutLines(
+        cutStyle: PnPCutStyle,
+        geometry: PnPGridGeometry,
+        sheetSize: CGSize,
+        context: CGContext
+    ) {
+        switch cutStyle {
+        case .edgeMarks:
+            drawEdgeMarks(geometry: geometry, sheetSize: sheetSize, context: context)
+        case .fullLines:
+            drawFullLines(geometry: geometry, sheetSize: sheetSize, context: context)
+        }
     }
 
     private static func prepareCutLines(_ context: CGContext) {
