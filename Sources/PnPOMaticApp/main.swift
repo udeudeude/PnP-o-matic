@@ -220,7 +220,7 @@ final class PreviewGrid {
         title: String,
         detail: String,
         buttonTitle: String,
-        target: AnyObject,
+        target: AnyObject?,
         action: Selector
     ) {
         container.orientation = .vertical
@@ -457,8 +457,8 @@ final class MainWindowController: NSWindowController {
 
         options2.addArrangedSubview(NSTextField(labelWithString: "Duplex flip:"))
         duplexPopup.addItems(withTitles: [
-            "Long edge — mirror columns",
-            "Short edge — mirror rows",
+            "Long edge - mirror columns",
+            "Short edge - mirror rows",
         ])
         duplexPopup.target = self
         duplexPopup.action = #selector(duplexChanged)
