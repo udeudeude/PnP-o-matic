@@ -3,7 +3,7 @@ import XCTest
 @testable import PnPCore
 
 final class ImpositionTests: XCTestCase {
-    func testBuiltInCardSizesAreExact() {
+    func testBuiltInCardSizesAreExact() throws {
         let poker = try XCTUnwrap(PnPCardSizePreset.poker.fixedSize)
         let bridge = try XCTUnwrap(PnPCardSizePreset.bridge.fixedSize)
         let euro = try XCTUnwrap(PnPCardSizePreset.euro.fixedSize)
@@ -12,8 +12,8 @@ final class ImpositionTests: XCTestCase {
         XCTAssertEqual(poker.height, 252, accuracy: 0.0001)
         XCTAssertEqual(bridge.width, 162, accuracy: 0.0001)
         XCTAssertEqual(bridge.height, 252, accuracy: 0.0001)
-        XCTAssertEqual(euro.width, CGFloat(59 * 72 / 25.4), accuracy: 0.0001)
-        XCTAssertEqual(euro.height, CGFloat(92 * 72 / 25.4), accuracy: 0.0001)
+        XCTAssertEqual(euro.width, CGFloat(59.0 * 72.0 / 25.4), accuracy: 0.0001)
+        XCTAssertEqual(euro.height, CGFloat(92.0 * 72.0 / 25.4), accuracy: 0.0001)
     }
 
     func testAllBuiltInPresetsFitNineUpOnLetter() {
