@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read version
+        run: |
+          VERSION="$(plutil -extract CFBundleShortVersionString raw Resources/Info.plist)"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Test
+        run: swift test -Xswiftc -warnings-as-errors
+
+      - name: Build universal app for macOS 11+
+        run: |
+          MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --arch x86_64 --product PnPOMaticApp --build-path .build-x86
+          MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --arch arm64 --product PnPOMaticApp --build-path .build-arm
+
+          X86="$(swift build -c release --arch x86_64 --build-path .build-x86 --show-bin-path)/PnPOMaticApp"
+          ARM="$(swift build -c release --arch arm64 --build-path .build-arm --show-bin-path)/PnPOMaticApp"
+          UNIVERSAL="$RUNNER_TEMP/PnPOMaticApp"
+
+          lipo -create "$X86" "$ARM" -output "$UNIVERSAL"
+          ARCHS="$(lipo -archs "$UNIVERSAL")"
+          [[ "$ARCHS" == *x86_64* ]]
+          [[ "$ARCHS" == *arm64* ]]
+
+          for ARCH in x86_64 arm64; do
+            THIN="$RUNNER_TEMP/PnPOMaticApp-$ARCH"
+            lipo "$UNIVERSAL" -thin "$ARCH" -output "$THIN"
+            otool -l "$THIN" | grep -A3 LC_BUILD_VERSION | grep -q 'minos 11.0'
+          done
+
+          echo "UNIVERSAL=$UNIVERSAL" >> "$GITHUB_ENV"
+
+      - name: Package
+        run: PNPOMATIC_BUILD="$UNIVERSAL" zsh scripts/package-release.sh
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ASSET="dist/PnP-o-matic-v$VERSION.zip"
+          gh release create "v$VERSION" "$ASSET"             --title "PnP-o-matic v$VERSION"             --notes "First PnP-o-matic release: 3×3 card imposition for one-card-per-page PDFs, appendable multi-PDF input, Letter/A4 output, and both edge-only crop marks and full-page cut lines. macOS 11+; universal Intel + Apple Silicon build."

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate metadata and scripts
+        run: |
+          plutil -lint Resources/Info.plist
+          zsh -n scripts/install.sh
+          zsh -n scripts/uninstall.sh
+          zsh -n scripts/package-release.sh
+
+      - name: Test
+        run: swift test -Xswiftc -warnings-as-errors
+
+      - name: Build for macOS 11+
+        run: MACOSX_DEPLOYMENT_TARGET=11.0 swift build -c release --product PnPOMaticApp -Xswiftc -warnings-as-errors
+
+      - name: Package
+        run: PNPOMATIC_BUILD="$PWD/.build/release/PnPOMaticApp" zsh scripts/package-release.sh
+
+      - name: Verify package
+        run: |
+          VERSION="$(plutil -extract CFBundleShortVersionString raw Resources/Info.plist)"
+          ZIP="$PWD/dist/PnP-o-matic-v$VERSION.zip"
+          VERIFY="$RUNNER_TEMP/pnp-verify"
+          rm -rf "$VERIFY"
+          mkdir -p "$VERIFY"
+          ditto -x -k "$ZIP" "$VERIFY"
+
+          DIST="$VERIFY/PnP-o-matic $VERSION"
+          APP="$DIST/.payload/PnP-o-matic.app"
+          test -x "$APP/Contents/MacOS/PnPOMaticApp"
+          test -x "$DIST/Install PnP-o-matic.command"
+          test -x "$DIST/Uninstall PnP-o-matic.command"
+          test -f "$DIST/START HERE.html"
+          codesign --verify --deep --strict "$APP"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PnP-o-matic-test-build
+          path: dist/PnP-o-matic-v*.zip
