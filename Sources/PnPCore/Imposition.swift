@@ -2,6 +2,40 @@ import CoreGraphics
 import Foundation
 import PDFKit
 
+public enum PnPCardSizePreset: String, CaseIterable {
+    case pdfPage
+    case poker
+    case bridge
+    case euro
+    case custom
+
+    public var displayName: String {
+        switch self {
+        case .pdfPage: return "Use PDF page size"
+        case .poker: return "Poker — 2.5 × 3.5 in"
+        case .bridge: return "Bridge — 2.25 × 3.5 in"
+        case .euro: return "Euro — 59 × 92 mm"
+        case .custom: return "Custom…"
+        }
+    }
+
+    public var fixedSize: CGSize? {
+        switch self {
+        case .pdfPage, .custom:
+            return nil
+        case .poker:
+            return CGSize(width: 2.5 * 72, height: 3.5 * 72)
+        case .bridge:
+            return CGSize(width: 2.25 * 72, height: 3.5 * 72)
+        case .euro:
+            return CGSize(
+                width: 59 * 72 / 25.4,
+                height: 92 * 72 / 25.4
+            )
+        }
+    }
+}
+
 public enum PnPCutStyle: String, CaseIterable {
     case edgeMarks
     case fullLines
@@ -123,7 +157,9 @@ public enum PnPImposer {
         inputURLs: [URL],
         outputURL: URL,
         paperSize: PnPPaperSize,
-        cutStyle: PnPCutStyle
+        cutStyle: PnPCutStyle,
+        cardSizePreset: PnPCardSizePreset = .pdfPage,
+        customCardSize: CGSize? = nil
     ) throws -> PnPResult {
         guard !inputURLs.isEmpty else {
             throw PnPError.noInput
@@ -150,8 +186,26 @@ public enum PnPImposer {
             throw PnPError.invalidCardSize
         }
 
+        let requestedCardSize: CGSize
+        switch cardSizePreset {
+        case .pdfPage:
+            requestedCardSize = firstBounds.size
+        case .custom:
+            guard let customCardSize,
+                  customCardSize.width > 0,
+                  customCardSize.height > 0 else {
+                throw PnPError.invalidCardSize
+            }
+            requestedCardSize = customCardSize
+        case .poker, .bridge, .euro:
+            guard let fixedSize = cardSizePreset.fixedSize else {
+                throw PnPError.invalidCardSize
+            }
+            requestedCardSize = fixedSize
+        }
+
         let sheetSize = paperSize.size
-        let geometry = gridGeometry(cardSize: firstBounds.size, sheetSize: sheetSize)
+        let geometry = gridGeometry(cardSize: requestedCardSize, sheetSize: sheetSize)
         guard geometry.scale > 0 else {
             throw PnPError.invalidCardSize
         }
