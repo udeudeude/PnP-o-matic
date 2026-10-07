@@ -350,8 +350,8 @@ final class MainWindowController: NSWindowController, NSTableViewDataSource, NST
                 ? 72
                 : 72 / 25.4
             customCardSize = CGSize(
-                width: width * pointsPerUnit,
-                height: height * pointsPerUnit
+                width: CGFloat(width * pointsPerUnit),
+                height: CGFloat(height * pointsPerUnit)
             )
         }
 

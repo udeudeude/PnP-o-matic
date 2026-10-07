@@ -3,6 +3,33 @@ import XCTest
 @testable import PnPCore
 
 final class ImpositionTests: XCTestCase {
+    func testBuiltInCardSizesAreExact() {
+        let poker = PnPCardSizePreset.poker.fixedSize
+        let bridge = PnPCardSizePreset.bridge.fixedSize
+        let euro = PnPCardSizePreset.euro.fixedSize
+
+        XCTAssertEqual(poker?.width, 180, accuracy: 0.0001)
+        XCTAssertEqual(poker?.height, 252, accuracy: 0.0001)
+        XCTAssertEqual(bridge?.width, 162, accuracy: 0.0001)
+        XCTAssertEqual(bridge?.height, 252, accuracy: 0.0001)
+        XCTAssertEqual(euro?.width, 59 * 72 / 25.4, accuracy: 0.0001)
+        XCTAssertEqual(euro?.height, 92 * 72 / 25.4, accuracy: 0.0001)
+    }
+
+    func testAllBuiltInPresetsFitNineUpOnLetter() {
+        for preset in [PnPCardSizePreset.poker, .bridge, .euro] {
+            guard let cardSize = preset.fixedSize else {
+                XCTFail("Missing fixed size for \(preset)")
+                continue
+            }
+            let geometry = PnPImposer.gridGeometry(
+                cardSize: cardSize,
+                sheetSize: PnPPaperSize.letter.size
+            )
+            XCTAssertEqual(geometry.scale, 1, accuracy: 0.0001)
+        }
+    }
+
     func testSourceOrderAppendsDocuments() {
         let order = PnPImposer.sourceOrder(pageCounts: [2, 3, 1])
 

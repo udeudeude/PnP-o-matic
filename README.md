@@ -7,8 +7,11 @@ A native macOS utility for turning PDFs with **one card per page** into print-re
 - Places pages 1–9 on sheet 1, pages 10–18 on sheet 2, and so on.
 - Lets you add a second, third, or later PDF; every new PDF is appended after the cards already loaded.
 - Supports **US Letter** and **A4**.
-- Preserves the PDF's physical card size at **100%** whenever a 3×3 grid fits.
-- Uniformly reduces oversized cards only when necessary.
+- Defaults to **Poker size: 2.5 × 3.5 in** finished cards.
+- Includes **Bridge: 2.25 × 3.5 in** and **Euro: 59 × 92 mm** presets.
+- Can instead use the source PDF page size or a custom width × height in inches or millimetres.
+- The selected preset defines the finished cut rectangle; source artwork scales proportionally into it without distortion.
+- Uniformly reduces the requested size only if a 3×3 grid cannot fit on the selected sheet.
 - Opens the finished PDF in Preview.
 
 ### Cut-line modes
@@ -20,6 +23,18 @@ Cut coordinates appear only in the margins outside the card grid. No guide line 
 **Full-page cut lines**
 
 Thin horizontal and vertical cut lines extend across the complete sheet at every card boundary.
+
+## Card sizes
+
+The **Card size** menu offers:
+
+- **Poker — 2.5 × 3.5 in** (default)
+- **Bridge — 2.25 × 3.5 in**
+- **Euro — 59 × 92 mm**
+- **Use PDF page size**
+- **Custom…** with inches or millimetres
+
+The three built-in card presets fit 3×3 at full size on both US Letter and A4.
 
 ## Input order
 
