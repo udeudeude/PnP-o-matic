@@ -265,7 +265,7 @@ final class CardSlotView: NSView, NSDraggingSource {
 
 final class SheetCanvasView: NSView {
     let slots: [CardSlotView]
-    private var layout = PnPSheetLayout(
+    private var sheetLayout = PnPSheetLayout(
         cardSize: CGSize(width: 180, height: 252),
         sheetSize: PnPPaperSize.letter.size,
         cutStyle: .edgeMarks
@@ -296,14 +296,14 @@ final class SheetCanvasView: NSView {
     }
 
     func configure(layout: PnPSheetLayout) {
-        self.layout = layout
+        self.sheetLayout = layout
         needsLayout = true
         needsDisplay = true
     }
 
     private var pageRect: CGRect {
         let area = bounds.insetBy(dx: 8, dy: 8)
-        let sheet = layout.sheetSize
+        let sheet = sheetLayout.sheetSize
         guard sheet.width > 0, sheet.height > 0 else { return area }
         let scale = min(area.width / sheet.width, area.height / sheet.height)
         return CGRect(
@@ -317,13 +317,13 @@ final class SheetCanvasView: NSView {
     override func layout() {
         super.layout()
         let paper = pageRect
-        let scale = paper.width / layout.sheetSize.width
+        let scale = paper.width / sheetLayout.sheetSize.width
 
         for slotIndex in 0..<min(9, slots.count) {
-            let trim = layout.cardFrame(slotIndex)
+            let trim = sheetLayout.cardFrame(slotIndex)
             slots[slotIndex].frame = CGRect(
                 x: paper.minX + trim.minX * scale,
-                y: paper.minY + (layout.sheetSize.height - trim.maxY) * scale,
+                y: paper.minY + (sheetLayout.sheetSize.height - trim.maxY) * scale,
                 width: trim.width * scale,
                 height: trim.height * scale
             )
@@ -348,19 +348,19 @@ final class SheetCanvasView: NSView {
         border.lineWidth = 0.5
         border.stroke()
 
-        let scale = paper.width / layout.sheetSize.width
+        let scale = paper.width / sheetLayout.sheetSize.width
         let marks = NSBezierPath()
         marks.lineWidth = 0.4
         NSColor.black.withAlphaComponent(0.72).setStroke()
 
-        for segment in layout.cutSegments {
+        for segment in sheetLayout.cutSegments {
             let p1 = CGPoint(
                 x: paper.minX + segment.start.x * scale,
-                y: paper.minY + (layout.sheetSize.height - segment.start.y) * scale
+                y: paper.minY + (sheetLayout.sheetSize.height - segment.start.y) * scale
             )
             let p2 = CGPoint(
                 x: paper.minX + segment.end.x * scale,
-                y: paper.minY + (layout.sheetSize.height - segment.end.y) * scale
+                y: paper.minY + (sheetLayout.sheetSize.height - segment.end.y) * scale
             )
             marks.move(to: p1)
             marks.line(to: p2)
