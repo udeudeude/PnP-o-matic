@@ -1074,6 +1074,15 @@ final class MainWindowController: NSWindowController {
         if !missingFronts.isEmpty { notices.append("Missing fronts: \(missingFronts.prefix(8).map(String.init).joined(separator: ", "))") }
         if sheetLayout.geometry.scale < 0.999 {
             notices.append("Scaled to \(Int(sheetLayout.geometry.scale * 100))% to fit sheet")
+        } else {
+            let grid = sheetLayout.geometry.gridRect
+            let sheet = sheetLayout.sheetSize
+            let narrowestMargin = min(
+                grid.minX, grid.minY, sheet.width - grid.maxX, sheet.height - grid.maxY
+            )
+            if narrowestMargin < 18 {
+                notices.append("Narrow print margins: consider larger paper")
+            }
         }
         warningsLabel.stringValue = notices.joined(separator: "   •   ")
         undoButton.isEnabled = window?.undoManager?.canUndo ?? false
