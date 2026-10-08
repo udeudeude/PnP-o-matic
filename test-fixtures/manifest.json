@@ -1,0 +1,1113 @@
+{
+  "collection": "PnP-o-matic test fixtures",
+  "format_version": 1,
+  "generation_seed": 20261007,
+  "generated_with": "generators/generate.py",
+  "card_reference_poker_points": [
+    180,
+    252
+  ],
+  "duplex_mapping": {
+    "long_edge_back_ids_in_sheet_reading_order": [
+      3,
+      2,
+      1,
+      6,
+      5,
+      4,
+      9,
+      8,
+      7
+    ],
+    "short_edge_back_ids_in_sheet_reading_order": [
+      7,
+      8,
+      9,
+      4,
+      5,
+      6,
+      1,
+      2,
+      3
+    ]
+  },
+  "files": [
+    {
+      "path": "01-registration/registration-backs-9.pdf",
+      "purpose": "Corresponding backs, one per page, never mirror the artwork",
+      "expected": "valid",
+      "pdf_pages": 9,
+      "bytes": 48617,
+      "sha256": "8425fe75c3d1a29f23b2a5afa3105f5b5523115262b8a9908140f836f2748944"
+    },
+    {
+      "path": "01-registration/registration-fronts-9.pdf",
+      "purpose": "Nine unique portrait fronts, one card per PDF page",
+      "expected": "valid",
+      "pdf_pages": 9,
+      "bytes": 48638,
+      "sha256": "e62ee393844689ae22ef289abdc52d07eecdfb0745c0d9c8e5cabec3398b70d9"
+    },
+    {
+      "path": "02-card-sizes/bridge-source.pdf",
+      "purpose": "Explicit bridge size, in PDF points 162.00 x 252.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          162.0,
+          252.0
+        ]
+      },
+      "bytes": 37184,
+      "sha256": "4cc2e1aca515e9a7456bf893b92573bbc5c7538fd924785c2e8457716a6b0aa1"
+    },
+    {
+      "path": "02-card-sizes/custom-narrow-source.pdf",
+      "purpose": "Explicit custom-narrow size, in PDF points 90.00 x 260.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          90.0,
+          260.0
+        ]
+      },
+      "bytes": 37092,
+      "sha256": "68e6aae4d5d20c1b6895d23cbeef8d30e8326c3e88a4ba92130cca2825ea3954"
+    },
+    {
+      "path": "02-card-sizes/custom-wide-source.pdf",
+      "purpose": "Explicit custom-wide size, in PDF points 280.00 x 140.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          280.0,
+          140.0
+        ]
+      },
+      "bytes": 37176,
+      "sha256": "cc153857bf2cb2af8b5333826496bcda3ad820fb837e8bebee6260cf1ed98dc9"
+    },
+    {
+      "path": "02-card-sizes/euro-59x92-source.pdf",
+      "purpose": "Explicit euro-59x92 size, in PDF points 167.24 x 260.79",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          167.244094488189,
+          260.7874015748032
+        ]
+      },
+      "bytes": 37300,
+      "sha256": "0bcc329763f9837ad165b223063a0b2ffb2868b6c9a460bc96e6aba31d83ecdc"
+    },
+    {
+      "path": "02-card-sizes/landscape-poker-source.pdf",
+      "purpose": "Explicit landscape-poker size, in PDF points 252.00 x 180.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          252.0,
+          180.0
+        ]
+      },
+      "bytes": 37208,
+      "sha256": "920e96195c3318c9081aff6f1d1d8ba0c96f1e97257f3960366448e76da99776"
+    },
+    {
+      "path": "02-card-sizes/mixed-size-pages.pdf",
+      "purpose": "Eight pages with mixed size/orientation; should not silently assume uniform sizes",
+      "expected": "valid",
+      "pdf_pages": 8,
+      "bytes": 47131,
+      "sha256": "0ca293ea728489479fe6dc18fbdd40c6d25c298fbc53940a9e9caad22c7a8985"
+    },
+    {
+      "path": "02-card-sizes/poker-source.pdf",
+      "purpose": "Explicit poker size, in PDF points 180.00 x 252.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          180.0,
+          252.0
+        ]
+      },
+      "bytes": 37201,
+      "sha256": "d6eecbaf596c5bd1b8edf589dad0759c60f84c4ee4dd560ee910ddebcadbae7a"
+    },
+    {
+      "path": "02-card-sizes/square-2p5-source.pdf",
+      "purpose": "Explicit square-2p5 size, in PDF points 180.00 x 180.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          180.0,
+          180.0
+        ]
+      },
+      "bytes": 37114,
+      "sha256": "88900ed569706d7433bf427c082f77a7a9ac89d39f2ba7520dd1c6c1e427d765"
+    },
+    {
+      "path": "02-card-sizes/tarot-source.pdf",
+      "purpose": "Explicit tarot size, in PDF points 198.00 x 342.00",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "size_points": [
+          198.0,
+          342.0
+        ]
+      },
+      "bytes": 37308,
+      "sha256": "db06eed34858bacd87f9ca0471c2c2d7ca9528585280eb23c9b5566565e5dcf4"
+    },
+    {
+      "path": "03-image-formats/16-bit-grayscale.png",
+      "purpose": "PNG with 16-bit grayscale samples",
+      "expected": "valid",
+      "bytes": 904,
+      "sha256": "74d39da2f04c72fe17c7db4236974092af91ec8f04b27df235841ed5b6be0a04"
+    },
+    {
+      "path": "03-image-formats/animated-three-frame.gif",
+      "purpose": "Animated GIF: import should be intentional about first-frame semantics; three frames",
+      "expected": "valid",
+      "bytes": 19053,
+      "sha256": "76375a241501887feb94ea979bd436420f570db39c4341f6b135c8fa9286d382"
+    },
+    {
+      "path": "03-image-formats/baseline.jpg",
+      "purpose": "baseline.jpg raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 60764,
+      "sha256": "aac2fee7ec166c79e2697064dcf97c63a2b2e1cee462384de61e32f81d6b35c2"
+    },
+    {
+      "path": "03-image-formats/cmyk.tif",
+      "purpose": "cmyk.tif raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 3150142,
+      "sha256": "1793fa6b4d7e3090632ede75cb2d9a631ccb6e585586c9b21376bc1c8bb66060"
+    },
+    {
+      "path": "03-image-formats/embedded-srgb-profile.jpg",
+      "purpose": "JPEG with embedded sRGB ICC profile",
+      "expected": "valid",
+      "bytes": 50559,
+      "sha256": "a8e5f2b23bb839612cc0807ff55c68abd37ca2b00cb535b4b6fea6a4879d8af0"
+    },
+    {
+      "path": "03-image-formats/exif-orientation-6.jpg",
+      "purpose": "EXIF orientation 6 means displayed image is rotated clockwise 90 degrees",
+      "expected": "valid",
+      "details": {
+        "exif_orientation": 6
+      },
+      "bytes": 43353,
+      "sha256": "1a1f3dc3666ee15c9cbdf918bd848e438f67d752b7ffe9c359ac95e44d1d417d"
+    },
+    {
+      "path": "03-image-formats/grayscale.png",
+      "purpose": "grayscale.png raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 6948,
+      "sha256": "f67922babab93291553f6e4d97906a759259759c948bb951e30b2b5b1db574a2"
+    },
+    {
+      "path": "03-image-formats/monochrome-1bit.png",
+      "purpose": "monochrome-1bit.png raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 40166,
+      "sha256": "240c5bd94c3c23ff7f93ecc21710e5c23094006fc0a817fc9487f70218dff5cd"
+    },
+    {
+      "path": "03-image-formats/palette-indexed.png",
+      "purpose": "palette-indexed.png raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 5731,
+      "sha256": "fd32b8ec2e5f442e2ba559bdb7b9ba32a2b25fcf3a93beca5fc749259f8f33de"
+    },
+    {
+      "path": "03-image-formats/rgb.png",
+      "purpose": "rgb.png raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 12775,
+      "sha256": "a3d65c951379aec425fb29f20c9b5494c3e9e584dce6c1c176e097f849220fe2"
+    },
+    {
+      "path": "03-image-formats/rgb.tiff",
+      "purpose": "rgb.tiff raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 43244,
+      "sha256": "f1f3b12c8c002f923c2b88d346e6c15bbac06cc5deab5777934c4d7eca287e28"
+    },
+    {
+      "path": "03-image-formats/rgba-transparent.png",
+      "purpose": "rgba-transparent.png raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 15044,
+      "sha256": "4a690c696317bb0f621ff6db391b718bb77c116d29c5277cea9303c67058d098"
+    },
+    {
+      "path": "03-image-formats/single-frame.gif",
+      "purpose": "single-frame.gif raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 10989,
+      "sha256": "d0c2d4269a42a4afcd247f1aab40ea413cead3d150256cf72574713c7ff3d1a0"
+    },
+    {
+      "path": "03-image-formats/standard.bmp",
+      "purpose": "standard.bmp raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 2364654,
+      "sha256": "71f80af32a1d16a4e08b5d61ed4885b74445a77bed838e6a3743898af0a9bef2"
+    },
+    {
+      "path": "03-image-formats/webp.webp",
+      "purpose": "webp.webp raster decoder/alpha/color-mode input",
+      "expected": "valid",
+      "bytes": 9530,
+      "sha256": "e0cddd4a1c45036d14e67d994881d87371a12cc4c2a6a78ab4a1aa44e535a5d9"
+    },
+    {
+      "path": "04-resolution-color/alpha-soft-edges.png",
+      "purpose": "Semi-transparent edges for compositor and PDF alpha tests",
+      "expected": "valid",
+      "bytes": 8347,
+      "sha256": "33721c182142736dbd5fcc34bf045831b8354ed1427624f9aafdf190a20913f9"
+    },
+    {
+      "path": "04-resolution-color/fixed-750x1050-150dpi.jpg",
+      "purpose": "Same 750x1050 pixels; embedded 150 DPI changes physical size",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          750,
+          1050
+        ],
+        "dpi": 150
+      },
+      "bytes": 49953,
+      "sha256": "be6776a7df1b3d8bdb5e0a929b7ac4c9624ee0a5846a64314e07d9c55e188eea"
+    },
+    {
+      "path": "04-resolution-color/fixed-750x1050-300dpi.jpg",
+      "purpose": "Same 750x1050 pixels; embedded 300 DPI changes physical size",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          750,
+          1050
+        ],
+        "dpi": 300
+      },
+      "bytes": 49953,
+      "sha256": "c7189254d98232fb6da790dd04ff912198469835759da41f5e06cc5b5c1a4600"
+    },
+    {
+      "path": "04-resolution-color/fixed-750x1050-600dpi.jpg",
+      "purpose": "Same 750x1050 pixels; embedded 600 DPI changes physical size",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          750,
+          1050
+        ],
+        "dpi": 600
+      },
+      "bytes": 49953,
+      "sha256": "ea0494c9ec10cc7a896a86ba517b7ea7971d396a4b372e822576e2eeb8a5c787"
+    },
+    {
+      "path": "04-resolution-color/fixed-750x1050-72dpi.jpg",
+      "purpose": "Same 750x1050 pixels; embedded 72 DPI changes physical size",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          750,
+          1050
+        ],
+        "dpi": 72
+      },
+      "bytes": 49953,
+      "sha256": "109b1213ab9a5d960330f56834b23ac52057b2e3ad1eaf8c094b78e3186073fe"
+    },
+    {
+      "path": "04-resolution-color/high-frequency-lines.png",
+      "purpose": "One-pixel alternating lines, tests resampling aliasing",
+      "expected": "valid",
+      "bytes": 6073,
+      "sha256": "e27ca75a0b74c9b952e86f8bc6d530db72a343402345303e2646bc3a12169d18"
+    },
+    {
+      "path": "04-resolution-color/jpeg-quality-5.jpg",
+      "purpose": "Visible compression artifacts; importer should preserve rather than conceal corruption",
+      "expected": "valid",
+      "bytes": 17670,
+      "sha256": "fe9f34a5af40513c18a3d263f72e750617a18cb9d1479e631a4e842f3531bcf3"
+    },
+    {
+      "path": "04-resolution-color/pixel-density-1500x2100-300dpi.png",
+      "purpose": "Content resolution 1500 x 2100 px with 300 DPI metadata",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          1500,
+          2100
+        ]
+      },
+      "bytes": 22433,
+      "sha256": "e768041894f5e654161331cfa8becba3e37bd3023b09db594aee4b264714e301"
+    },
+    {
+      "path": "04-resolution-color/pixel-density-300x420-300dpi.png",
+      "purpose": "Content resolution 300 x 420 px with 300 DPI metadata",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          300,
+          420
+        ]
+      },
+      "bytes": 11059,
+      "sha256": "314a3f31786bc5e839cae2a3d11def55015e8303aef019640d3315e4e3cb7b18"
+    },
+    {
+      "path": "04-resolution-color/pixel-density-750x1050-300dpi.png",
+      "purpose": "Content resolution 750 x 1050 px with 300 DPI metadata",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          750,
+          1050
+        ]
+      },
+      "bytes": 12796,
+      "sha256": "c17801321dd180e02d0d0e19cef47f5ea9f768987a292a93024a894d5a39c10c"
+    },
+    {
+      "path": "04-resolution-color/pixel-density-90x126-300dpi.png",
+      "purpose": "Content resolution 90 x 126 px with 300 DPI metadata",
+      "expected": "valid",
+      "details": {
+        "pixels": [
+          90,
+          126
+        ]
+      },
+      "bytes": 3064,
+      "sha256": "30bd6841f1eee320d94718c452131d33442eeddc2d4560931be239782062be54"
+    },
+    {
+      "path": "05-pdf-variations/all-distinct-page-boxes.pdf",
+      "purpose": "All Media/Crop/Bleed/Trim/Art boxes distinct and correctly nested",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "media": [
+          0,
+          0,
+          230,
+          310
+        ],
+        "crop": [
+          5,
+          7,
+          225,
+          303
+        ],
+        "bleed": [
+          12,
+          14,
+          218,
+          296
+        ],
+        "trim": [
+          22,
+          24,
+          208,
+          286
+        ]
+      },
+      "bytes": 36105,
+      "sha256": "2267978c19518dc6b66d7ee440138682e5fe2dbe679f3be3a3f726ccdcae472e"
+    },
+    {
+      "path": "05-pdf-variations/font-embedded.pdf",
+      "purpose": "PDF with embedded fixture TrueType font when available",
+      "expected": "valid",
+      "pdf_pages": 2,
+      "bytes": 38586,
+      "sha256": "ffe4603e5a920ac3b78ec6cdbc7e1dba1d0aba3e2fe883f42ebe54c7a6dfa440"
+    },
+    {
+      "path": "05-pdf-variations/mixed-media-page-sizes.pdf",
+      "purpose": "Mixed MediaBox dimensions in a single PDF",
+      "expected": "valid",
+      "pdf_pages": 5,
+      "bytes": 42984,
+      "sha256": "5eca56707c2775c9d74abef9adbb72fbcaa3b82748ccb0c3340cc4532b75e694"
+    },
+    {
+      "path": "05-pdf-variations/mixed-vector-raster.pdf",
+      "purpose": "Raster inlay with vector text and trim paths",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 47639,
+      "sha256": "e18c4666977a4697cc74dc2b6bf760169bc8d00057d3d9c6c966ced70ace7891"
+    },
+    {
+      "path": "05-pdf-variations/nonzero-mediabox-origin.pdf",
+      "purpose": "Every PDF box has nonzero lower-left origin; tests offsets",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "media": [
+          16,
+          24,
+          250,
+          336
+        ],
+        "trim": [
+          35,
+          43,
+          231,
+          315
+        ]
+      },
+      "bytes": 36922,
+      "sha256": "cede9338069235e44e5ae274fe8d5d5e26acc92547d396b88be79b49605ba111"
+    },
+    {
+      "path": "05-pdf-variations/page-rotate-90-180-270.pdf",
+      "purpose": "Three cards with Rotate 90/180/270 metadata, not artwork pre-rotated",
+      "expected": "valid",
+      "pdf_pages": 3,
+      "details": {
+        "pdf_rotate": [
+          90,
+          180,
+          270
+        ]
+      },
+      "bytes": 39508,
+      "sha256": "d585e1303f622cbcdb870523e9e465caf7c7ed3384f9d1cac6feada258381169"
+    },
+    {
+      "path": "05-pdf-variations/raster-only.pdf",
+      "purpose": "Full-bleed raster embedded in PDF",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 19483,
+      "sha256": "2e122108d8a793ebf36553ab23002a6f402eda8610c681bb103a44834a288ae6"
+    },
+    {
+      "path": "05-pdf-variations/transparency-overprint.pdf",
+      "purpose": "PDF native transparency, overlapping translucent circles",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 37386,
+      "sha256": "1275c8df283658293417b5b6bbe625c538e24ff78dc167c225f07a5d96830bea"
+    },
+    {
+      "path": "05-pdf-variations/vector-only.pdf",
+      "purpose": "All vector paths and text; stays crisp at zoom",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 37147,
+      "sha256": "f0baf552ed8f576b9fe7ee2ef1c933968cd14de5ea894a6ab686c68cb0b8a6a4"
+    },
+    {
+      "path": "06-bleed-and-crop/3mm-bleed-with-distinct-boxes.pdf",
+      "purpose": "TrimBox is exactly poker size; BleedBox extends by 3mm each edge",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "trim_size_points": [
+          180.0,
+          252.0
+        ],
+        "bleed_mm": 3
+      },
+      "bytes": 36066,
+      "sha256": "b60c772db7a6b57b0958d18e0f8f483beeebcea513dccb2a0457c00038890dd5"
+    },
+    {
+      "path": "06-bleed-and-crop/no-bleed-artwork-to-edge.pdf",
+      "purpose": "Artwork reaches MediaBox edges, but no extra bleed pixels exist",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 18874,
+      "sha256": "61a573597c0d9fc2d672ef8a694c2e820e1f1810229242962057abdd420a84b6"
+    },
+    {
+      "path": "06-bleed-and-crop/safe-margin-and-hairlines.pdf",
+      "purpose": "Four safe-margin rectangles and precise hairlines at varying widths",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 36407,
+      "sha256": "ae076c718a518383e1b8728bb23a080b585d6b4ca326eeb6b42e7d5724096f11"
+    },
+    {
+      "path": "07-deck-import-patterns/alternating-front-back-24pages.pdf",
+      "purpose": "Correct F1,B1,F2,B2 ... F12,B12 ordering",
+      "expected": "valid",
+      "pdf_pages": 24,
+      "details": {
+        "import_mode": "alternating"
+      },
+      "bytes": 70162,
+      "sha256": "172906f2ce8fdece1d6eb3fcb7cdcafc99ba80d2b9f90d83825dd3493063d88e"
+    },
+    {
+      "path": "07-deck-import-patterns/first-half-fronts-second-half-backs-24pages.pdf",
+      "purpose": "First 12 pages fronts, next 12 backs",
+      "expected": "valid",
+      "pdf_pages": 24,
+      "details": {
+        "import_mode": "first_half_second_half"
+      },
+      "bytes": 70175,
+      "sha256": "a76e9091eee80c331bdaff82276e96b7f20526a1aea2f91cff2dd6dbdf42107a"
+    },
+    {
+      "path": "07-deck-import-patterns/odd-page-alternating-5pages.pdf",
+      "purpose": "Odd alternating PDF: third front has no back; app should warn",
+      "expected": "valid",
+      "pdf_pages": 5,
+      "bytes": 42904,
+      "sha256": "af1cbd344127f6b7c8a2679c8547106e139a4e691da9b2a9b169879a941c6282"
+    },
+    {
+      "path": "07-deck-import-patterns/odd-page-split-7pages.pdf",
+      "purpose": "Ambiguous half/half split 7 pages; app should warn, not silently infer",
+      "expected": "valid",
+      "pdf_pages": 7,
+      "bytes": 45766,
+      "sha256": "b73bfc202aa3b60f454034e39feda092d7f3eaf251da4cdff5a8dbd8f51fa355"
+    },
+    {
+      "path": "07-deck-import-patterns/one-back-repeat-for-every-card.pdf",
+      "purpose": "Single common back for Repeat One Back import",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 19811,
+      "sha256": "99d05dd4bd3e9b2c5317a69180f6893475f59834c9767287f375cd2475dbfff1"
+    },
+    {
+      "path": "07-deck-import-patterns/separate-backs-12.pdf",
+      "purpose": "Separate back document: pages 1-12 correspond by index",
+      "expected": "valid",
+      "pdf_pages": 12,
+      "bytes": 52921,
+      "sha256": "4c9e3b3f198c701869b9b8fc1af2f15162a8da08fad3ecf56ea263fb42099c65"
+    },
+    {
+      "path": "07-deck-import-patterns/separate-fronts-12.pdf",
+      "purpose": "Separate front document: pages 1-12 correspond by index",
+      "expected": "valid",
+      "pdf_pages": 12,
+      "bytes": 52944,
+      "sha256": "ecf28f629ecec343b828b8cee6120e0bc37cabe84306c7d28c212cb6356f8ecb"
+    },
+    {
+      "path": "07-deck-import-patterns/tidal-signal-alternating-24pages.pdf",
+      "purpose": "Realistic fictional deck with F1,B1... interleaving; vector artwork",
+      "expected": "valid",
+      "pdf_pages": 24,
+      "bytes": 98253,
+      "sha256": "9ffb3056f256ec55810d63e28e472da882a0cd7bd5e181a0883febcde4e3a5bc"
+    },
+    {
+      "path": "07-deck-import-patterns/tidal-signal-backs-12.pdf",
+      "purpose": "Tidal Signal original procedural vector card game; B pages",
+      "expected": "valid",
+      "pdf_pages": 12,
+      "bytes": 35605,
+      "sha256": "0640b5001d78a50c3a0a972d1091f1e15ce70096b340796dc78574e11b2542f2"
+    },
+    {
+      "path": "07-deck-import-patterns/tidal-signal-fronts-12.pdf",
+      "purpose": "Tidal Signal original procedural vector card game; F pages",
+      "expected": "valid",
+      "pdf_pages": 12,
+      "bytes": 81004,
+      "sha256": "f1595f81eebf5aaddef453e5c1839aa341142f8bec00ee9c14557a5f3e972935"
+    },
+    {
+      "path": "08-deck-lengths/01-cards-backs.pdf",
+      "purpose": "1 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "pair_count": 1,
+        "sheet_count": 1
+      },
+      "bytes": 37147,
+      "sha256": "5e63458a63cd44b074f6ee84263ca93357447a34144777aa8b288084f7d9ae2a"
+    },
+    {
+      "path": "08-deck-lengths/01-cards-fronts.pdf",
+      "purpose": "1 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "details": {
+        "pair_count": 1,
+        "sheet_count": 1
+      },
+      "bytes": 37151,
+      "sha256": "a5852099603333f40825f0aad6fa3eef9e6f1e667f73c55a11866439beced77f"
+    },
+    {
+      "path": "08-deck-lengths/08-cards-backs.pdf",
+      "purpose": "8 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 8,
+      "details": {
+        "pair_count": 8,
+        "sheet_count": 1
+      },
+      "bytes": 47179,
+      "sha256": "39a6653d641661185fde01ec0a0408206e681b40e8af732099e35e1d80eb130a"
+    },
+    {
+      "path": "08-deck-lengths/08-cards-fronts.pdf",
+      "purpose": "8 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 8,
+      "details": {
+        "pair_count": 8,
+        "sheet_count": 1
+      },
+      "bytes": 47197,
+      "sha256": "3e16be9e13c5a046b37d30036704a2410128b33ecbcd656eb208aa83cd35ac44"
+    },
+    {
+      "path": "08-deck-lengths/09-cards-backs.pdf",
+      "purpose": "9 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 9,
+      "details": {
+        "pair_count": 9,
+        "sheet_count": 1
+      },
+      "bytes": 48611,
+      "sha256": "42f6e9af9f5b6bc89c5fc487b2af1a9f70fd3cd2e24b808ddc4553f447bdfbee"
+    },
+    {
+      "path": "08-deck-lengths/09-cards-fronts.pdf",
+      "purpose": "9 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 9,
+      "details": {
+        "pair_count": 9,
+        "sheet_count": 1
+      },
+      "bytes": 48632,
+      "sha256": "c02de98755c3b84bbe31bafca2e1d3d5d9daf3ab3cb2ef9c731ac4a8c0911a5b"
+    },
+    {
+      "path": "08-deck-lengths/10-cards-backs.pdf",
+      "purpose": "10 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 10,
+      "details": {
+        "pair_count": 10,
+        "sheet_count": 2
+      },
+      "bytes": 50049,
+      "sha256": "9d94e5dbefae573a0a93cc5fc24ab96150d005d3e352cf155a5f6efb602150c8"
+    },
+    {
+      "path": "08-deck-lengths/10-cards-fronts.pdf",
+      "purpose": "10 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 10,
+      "details": {
+        "pair_count": 10,
+        "sheet_count": 2
+      },
+      "bytes": 50072,
+      "sha256": "22faa8f3ad01f8b2d4df95f96e0b2ca75e1a869e0a364d87b9356557e256dbc6"
+    },
+    {
+      "path": "08-deck-lengths/17-cards-backs.pdf",
+      "purpose": "17 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 17,
+      "details": {
+        "pair_count": 17,
+        "sheet_count": 2
+      },
+      "bytes": 60090,
+      "sha256": "fecc93db0948bb8feaddd71ce6ea21172bc5a845b3af675942c3cb22af1f7448"
+    },
+    {
+      "path": "08-deck-lengths/17-cards-fronts.pdf",
+      "purpose": "17 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 17,
+      "details": {
+        "pair_count": 17,
+        "sheet_count": 2
+      },
+      "bytes": 60117,
+      "sha256": "c5da05ec9773226475812684dd07f2e90526e1da1df2d138a27b84c505cf6968"
+    },
+    {
+      "path": "08-deck-lengths/18-cards-backs.pdf",
+      "purpose": "18 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 18,
+      "details": {
+        "pair_count": 18,
+        "sheet_count": 2
+      },
+      "bytes": 61524,
+      "sha256": "712274ce6f34e1bdb93064264008205d0f3e7f2a00d1930c7b596ca745987fb8"
+    },
+    {
+      "path": "08-deck-lengths/18-cards-fronts.pdf",
+      "purpose": "18 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 18,
+      "details": {
+        "pair_count": 18,
+        "sheet_count": 2
+      },
+      "bytes": 61554,
+      "sha256": "6d45066f1508f67fdce6a3145dbd6b15daa3d2891bca0900cf891d038eb26137"
+    },
+    {
+      "path": "08-deck-lengths/54-cards-backs.pdf",
+      "purpose": "54 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 54,
+      "details": {
+        "pair_count": 54,
+        "sheet_count": 6
+      },
+      "bytes": 113217,
+      "sha256": "4b02f623fef38d9d43aba376fa7344492ea73f1b724e17aab2c409021dd2d4c0"
+    },
+    {
+      "path": "08-deck-lengths/54-cards-fronts.pdf",
+      "purpose": "54 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 54,
+      "details": {
+        "pair_count": 54,
+        "sheet_count": 6
+      },
+      "bytes": 113271,
+      "sha256": "9ce67f9a332b4bd07333e97d387a373c47d05e90bade652d332f5c092119830f"
+    },
+    {
+      "path": "08-deck-lengths/55-cards-backs.pdf",
+      "purpose": "55 B-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 55,
+      "details": {
+        "pair_count": 55,
+        "sheet_count": 7
+      },
+      "bytes": 114658,
+      "sha256": "29fa8870f601525e2ed07909a87be8d1f56d92c6e0357606d06e5dc144c91afe"
+    },
+    {
+      "path": "08-deck-lengths/55-cards-fronts.pdf",
+      "purpose": "55 F-side cards, tests ceil(n/9) sheets",
+      "expected": "valid",
+      "pdf_pages": 55,
+      "details": {
+        "pair_count": 55,
+        "sheet_count": 7
+      },
+      "bytes": 114710,
+      "sha256": "3a06bbc2963c317b680d3f0de52a2bfaf63b2783522d575bfb10829972f69a81"
+    },
+    {
+      "path": "09-pairing-and-order/backs-correct-10.pdf",
+      "purpose": "backs correct 10.pdf; IDs identify intended pairing",
+      "expected": "valid",
+      "pdf_pages": 10,
+      "details": {
+        "pair_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "bytes": 50051,
+      "sha256": "4799141f061ea4cbc4b7b81a929aeee46660564501573bf61b10043b4d6d4573"
+    },
+    {
+      "path": "09-pairing-and-order/backs-only-eight.pdf",
+      "purpose": "backs only eight.pdf; IDs identify intended pairing",
+      "expected": "valid",
+      "pdf_pages": 8,
+      "details": {
+        "pair_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "bytes": 47181,
+      "sha256": "456a9e9170dde76d27b6c8a87af0e57990bd858c288b865a0ae8b973e3699b41"
+    },
+    {
+      "path": "09-pairing-and-order/backs-reversed-10.pdf",
+      "purpose": "backs reversed 10.pdf; IDs identify intended pairing",
+      "expected": "valid",
+      "pdf_pages": 10,
+      "details": {
+        "pair_ids": [
+          10,
+          9,
+          8,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2,
+          1
+        ]
+      },
+      "bytes": 50052,
+      "sha256": "f9695e9ef15fc290d1b3e23ac707359fec268a9746b6e9b1229789a9c4e65915"
+    },
+    {
+      "path": "09-pairing-and-order/drag-single-back-01.pdf",
+      "purpose": "Individual PDF back 1, suitable for dropping into any preview slot",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 37152,
+      "sha256": "e049923055518823569a6eff89135cfb82196a877467c284a80da6680642c232"
+    },
+    {
+      "path": "09-pairing-and-order/drag-single-back-02.pdf",
+      "purpose": "Individual PDF back 2, suitable for dropping into any preview slot",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 37148,
+      "sha256": "97fd55f045ca076f3bdb517e0165cda107567e48899c78ba6c628a0dba671fb7"
+    },
+    {
+      "path": "09-pairing-and-order/drag-single-back-03.pdf",
+      "purpose": "Individual PDF back 3, suitable for dropping into any preview slot",
+      "expected": "valid",
+      "pdf_pages": 1,
+      "bytes": 37148,
+      "sha256": "bfa6e00d1466ff0f243cd35f4f753eaa0a12d462a3c4d98058ed6dfeb50da4ac"
+    },
+    {
+      "path": "09-pairing-and-order/drag-single-front-01.png",
+      "purpose": "Individual PNG front 1, suitable for dropping into any preview slot",
+      "expected": "valid",
+      "bytes": 12775,
+      "sha256": "a3d65c951379aec425fb29f20c9b5494c3e9e584dce6c1c176e097f849220fe2"
+    },
+    {
+      "path": "09-pairing-and-order/drag-single-front-02.png",
+      "purpose": "Individual PNG front 2, suitable for dropping into any preview slot",
+      "expected": "valid",
+      "bytes": 13547,
+      "sha256": "ef94efd6ce85016d6ebc713b63a8c317014d9c61e9431dfc60c42786cc616d2b"
+    },
+    {
+      "path": "09-pairing-and-order/drag-single-front-03.png",
+      "purpose": "Individual PNG front 3, suitable for dropping into any preview slot",
+      "expected": "valid",
+      "bytes": 13727,
+      "sha256": "5d43edc3c6f0d94158b534523fcac2f9b3be010e716ee099080c8402f586cca6"
+    },
+    {
+      "path": "09-pairing-and-order/fronts-10.pdf",
+      "purpose": "fronts 10.pdf; IDs identify intended pairing",
+      "expected": "valid",
+      "pdf_pages": 10,
+      "details": {
+        "pair_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "bytes": 50066,
+      "sha256": "567973dd842ecd0611f18f2d191352f01dddd56c29686c7e7d94c62a43d8e7bf"
+    },
+    {
+      "path": "10-invalid-inputs/empty-zero-byte.pdf",
+      "purpose": "Zero-byte PDF must show an import error",
+      "expected": "invalid",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "10-invalid-inputs/jpeg-bytes-named-png.png",
+      "purpose": "Mismatched extension and file signature; expected platform-dependent sniffing",
+      "expected": "ambiguous",
+      "bytes": 60764,
+      "sha256": "aac2fee7ec166c79e2697064dcf97c63a2b2e1cee462384de61e32f81d6b35c2"
+    },
+    {
+      "path": "10-invalid-inputs/not-really-a-pdf.pdf",
+      "purpose": "Plain UTF-8 text with misleading PDF extension",
+      "expected": "invalid",
+      "bytes": 37,
+      "sha256": "c8efdc8863ce7c3c6dd009c9bb0e6f972fcb809c6cff889dbc1c06fd5808b408"
+    },
+    {
+      "path": "10-invalid-inputs/password-required.pdf",
+      "purpose": "Encrypted PDF with user password testpass; no sensitive content",
+      "expected": "encrypted",
+      "pdf_pages": 1,
+      "details": {
+        "password": "testpass"
+      },
+      "bytes": 37037,
+      "sha256": "8a00abad65520cc812dcc13daffbe474894f202b96b81dfc16ad24fd22e4b775"
+    },
+    {
+      "path": "10-invalid-inputs/pdf-with-no-pages.pdf",
+      "purpose": "Structurally valid PDF containing zero pages: must reject/warn",
+      "expected": "zero_pages",
+      "pdf_pages": 0,
+      "bytes": 311,
+      "sha256": "c1770c29539e4267a02e8d2257ff36d606f3e72701f923c90ef73fb2b6058b9d"
+    },
+    {
+      "path": "10-invalid-inputs/truncated-pdf.pdf",
+      "purpose": "Truncated PDF header/object data",
+      "expected": "invalid",
+      "bytes": 110,
+      "sha256": "5a842066feff73feb8d79b35164f3d4b4d94cf01d34180bdb0b1d2d2210bf8cb"
+    },
+    {
+      "path": "10-invalid-inputs/unsupported-svg.svg",
+      "purpose": "SVG not in usual ImageIO formats; app should reject gracefully unless SVG is deliberately supported",
+      "expected": "unsupported",
+      "bytes": 211,
+      "sha256": "29649829d5d7a8fa30582f9b09a3133f9eb7374f45ffe70140e3be594e775640"
+    },
+    {
+      "path": "10-invalid-inputs/zero-byte.png",
+      "purpose": "Zero-byte PNG must show import error",
+      "expected": "invalid",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "reference-outputs/a4-long-edge-expected-9up.pdf",
+      "purpose": "Independent A4 long-edge duplex reference, 2 pages",
+      "expected": "valid",
+      "pdf_pages": 2,
+      "details": {
+        "expected_back_positions": [
+          3,
+          2,
+          1,
+          6,
+          5,
+          4,
+          9,
+          8,
+          7
+        ]
+      },
+      "bytes": 41074,
+      "sha256": "16e50ca34fcd6970945e635506f757bb47fe8512e20ad578ab220c9999d7dd7a"
+    },
+    {
+      "path": "reference-outputs/a4-short-edge-expected-9up.pdf",
+      "purpose": "Independent A4 short-edge duplex reference, 2 pages",
+      "expected": "valid",
+      "pdf_pages": 2,
+      "details": {
+        "expected_back_positions": [
+          7,
+          8,
+          9,
+          4,
+          5,
+          6,
+          1,
+          2,
+          3
+        ]
+      },
+      "bytes": 41072,
+      "sha256": "e360d84542448e77430c12822fbe8920f7d2feb76b29ee5e4399390b152b9f87"
+    },
+    {
+      "path": "reference-outputs/letter-long-edge-expected-9up.pdf",
+      "purpose": "Independent LETTER long-edge duplex reference, 2 pages",
+      "expected": "valid",
+      "pdf_pages": 2,
+      "details": {
+        "expected_back_positions": [
+          3,
+          2,
+          1,
+          6,
+          5,
+          4,
+          9,
+          8,
+          7
+        ]
+      },
+      "bytes": 40848,
+      "sha256": "9388425642745e445f86dfe7344c74e0d17bca18d2e7ce539b847a442be58b88"
+    },
+    {
+      "path": "reference-outputs/letter-short-edge-expected-9up.pdf",
+      "purpose": "Independent LETTER short-edge duplex reference, 2 pages",
+      "expected": "valid",
+      "pdf_pages": 2,
+      "details": {
+        "expected_back_positions": [
+          7,
+          8,
+          9,
+          4,
+          5,
+          6,
+          1,
+          2,
+          3
+        ]
+      },
+      "bytes": 40848,
+      "sha256": "b3f4702779171eeb182e1fea3cfa69dfbe1ea1dfcfdd729cb153017cf389db2d"
+    }
+  ]
+}
