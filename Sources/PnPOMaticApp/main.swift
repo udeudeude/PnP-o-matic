@@ -7,15 +7,6 @@ extension NSPasteboard.PasteboardType {
     static let pnpCardSlot = NSPasteboard.PasteboardType("com.udeudeude.pnpomatic.card-slot")
 }
 
-private struct CardPair {
-    var front: PnPCardAsset?
-    var back: PnPCardAsset?
-
-    var isEmpty: Bool {
-        front == nil && back == nil
-    }
-}
-
 private func thumbnail(for asset: PnPCardAsset?, size: NSSize) -> NSImage? {
     guard let asset else { return nil }
 
@@ -38,20 +29,23 @@ final class CardSlotView: NSView, NSDraggingSource {
     var onExternalDrop: ((PnPCardSide, Int, [URL]) -> Void)?
     var onMove: ((PnPCardSide, Int, Int) -> Void)?
     var onClear: ((PnPCardSide, Int) -> Void)?
+    var onHover: ((Int?) -> Void)?
 
     private let imageView = NSImageView()
     private let numberLabel = NSTextField(labelWithString: "")
     private let sourceLabel = NSTextField(labelWithString: "")
     private var asset: PnPCardAsset?
     private var dragStarted = false
+    private var linkedHighlight = false
+    private var dropHighlight = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
 
         wantsLayer = true
-        layer?.cornerRadius = 7
-        layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.cgColor
+        layer?.cornerRadius = 0
+        layer?.borderWidth = 0.5
+        layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
         registerForDraggedTypes([.pnpCardSlot, .fileURL])
@@ -121,6 +115,37 @@ final class CardSlotView: NSView, NSDraggingSource {
         }
     }
 
+    func setLinkedHighlight(_ value: Bool) {
+        linkedHighlight = value
+        updateBorder()
+    }
+
+    private func updateBorder() {
+        layer?.borderWidth = linkedHighlight || dropHighlight ? 2 : 0.5
+        layer?.borderColor = (dropHighlight ? NSColor.systemGreen :
+            linkedHighlight ? NSColor.controlAccentColor :
+            NSColor.separatorColor.withAlphaComponent(0.5)).cgColor
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        ))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        onHover?(globalIndex)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        onHover?(nil)
+    }
+
     @objc private func clearSlot() {
         onClear?(side, globalIndex)
     }
@@ -159,14 +184,21 @@ final class CardSlotView: NSView, NSDraggingSource {
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        if sender.draggingPasteboard.string(forType: .pnpCardSlot) != nil {
-            return .move
-        }
+        let internalDrag = sender.draggingPasteboard.string(forType: .pnpCardSlot) != nil
+        let externalDrag = !externalURLs(from: sender).isEmpty
+        dropHighlight = internalDrag || externalDrag
+        updateBorder()
+        return internalDrag ? .move : externalDrag ? .copy : []
+    }
 
-        return externalURLs(from: sender).isEmpty ? [] : .copy
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        dropHighlight = false
+        updateBorder()
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        dropHighlight = false
+        updateBorder()
         if let payload = sender.draggingPasteboard.string(forType: .pnpCardSlot) {
             let pieces = payload.split(separator: ":")
             guard pieces.count == 2,
@@ -207,17 +239,17 @@ final class CardSlotView: NSView, NSDraggingSource {
 
 final class SheetCanvasView: NSView {
     let slots: [CardSlotView]
-
-    private var paperSize = PnPPaperSize.letter.size
-    private var cardSize = PnPCardSizePreset.poker.fixedSize ?? CGSize(width: 180, height: 252)
-    private var cutStyle: PnPCutStyle = .edgeMarks
+    private var layout = PnPSheetLayout(
+        cardSize: CGSize(width: 180, height: 252),
+        sheetSize: PnPPaperSize.letter.size,
+        cutStyle: .edgeMarks
+    )
 
     override var isFlipped: Bool { true }
 
     init(slots: [CardSlotView]) {
         self.slots = slots
         super.init(frame: .zero)
-
         wantsLayer = true
         layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
 
@@ -229,7 +261,7 @@ final class SheetCanvasView: NSView {
         translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             widthAnchor.constraint(greaterThanOrEqualToConstant: 330),
-            heightAnchor.constraint(greaterThanOrEqualToConstant: 430),
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 430)
         ])
     }
 
@@ -237,134 +269,77 @@ final class SheetCanvasView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(
-        paperSize: CGSize,
-        cardSize: CGSize,
-        cutStyle: PnPCutStyle
-    ) {
-        self.paperSize = paperSize
-        self.cardSize = cardSize
-        self.cutStyle = cutStyle
+    func configure(layout: PnPSheetLayout) {
+        self.layout = layout
         needsLayout = true
         needsDisplay = true
     }
 
     private var pageRect: CGRect {
-        let available = bounds.insetBy(dx: 8, dy: 8)
-        guard paperSize.width > 0, paperSize.height > 0 else { return available }
-
-        let scale = min(
-            available.width / paperSize.width,
-            available.height / paperSize.height
-        )
-        let size = CGSize(width: paperSize.width * scale, height: paperSize.height * scale)
+        let area = bounds.insetBy(dx: 8, dy: 8)
+        let sheet = layout.sheetSize
+        guard sheet.width > 0, sheet.height > 0 else { return area }
+        let scale = min(area.width / sheet.width, area.height / sheet.height)
         return CGRect(
-            x: available.midX - size.width / 2,
-            y: available.midY - size.height / 2,
-            width: size.width,
-            height: size.height
+            x: area.midX - sheet.width * scale / 2,
+            y: area.midY - sheet.height * scale / 2,
+            width: sheet.width * scale,
+            height: sheet.height * scale
         )
-    }
-
-    private func pageScale() -> CGFloat {
-        guard paperSize.width > 0 else { return 1 }
-        return pageRect.width / paperSize.width
     }
 
     override func layout() {
         super.layout()
+        let paper = pageRect
+        let scale = paper.width / layout.sheetSize.width
 
-        let geometry = PnPImposer.gridGeometry(cardSize: cardSize, sheetSize: paperSize)
-        let page = pageRect
-        let scale = pageScale()
-
-        for visualSlot in 0..<min(9, slots.count) {
-            let cardFrame = geometry.frame(forSlot: visualSlot)
-            let frame = CGRect(
-                x: page.minX + cardFrame.minX * scale,
-                y: page.minY + (paperSize.height - cardFrame.maxY) * scale,
-                width: cardFrame.width * scale,
-                height: cardFrame.height * scale
+        for slotIndex in 0..<min(9, slots.count) {
+            let trim = layout.cardFrame(slotIndex)
+            slots[slotIndex].frame = CGRect(
+                x: paper.minX + trim.minX * scale,
+                y: paper.minY + (layout.sheetSize.height - trim.maxY) * scale,
+                width: trim.width * scale,
+                height: trim.height * scale
             )
-            slots[visualSlot].frame = frame.insetBy(dx: 0.5, dy: 0.5)
         }
     }
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-
-        let page = pageRect
+        let paper = pageRect
         let shadow = NSShadow()
         shadow.shadowBlurRadius = 5
         shadow.shadowOffset = NSSize(width: 0, height: 1)
         shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
-
         NSGraphicsContext.saveGraphicsState()
         shadow.set()
         NSColor.white.setFill()
-        NSBezierPath(rect: page).fill()
+        NSBezierPath(rect: paper).fill()
         NSGraphicsContext.restoreGraphicsState()
 
-        NSColor.separatorColor.withAlphaComponent(0.5).setStroke()
-        let outline = NSBezierPath(rect: page)
-        outline.lineWidth = 0.5
-        outline.stroke()
+        NSColor.separatorColor.withAlphaComponent(0.45).setStroke()
+        let border = NSBezierPath(rect: paper)
+        border.lineWidth = 0.5
+        border.stroke()
 
-        drawTrimLines(in: page)
-    }
+        let scale = paper.width / layout.sheetSize.width
+        let marks = NSBezierPath()
+        marks.lineWidth = 0.4
+        NSColor.black.withAlphaComponent(0.72).setStroke()
 
-    private func drawTrimLines(in page: CGRect) {
-        let geometry = PnPImposer.gridGeometry(cardSize: cardSize, sheetSize: paperSize)
-        let scale = pageScale()
-
-        func x(_ value: CGFloat) -> CGFloat {
-            page.minX + value * scale
+        for segment in layout.cutSegments {
+            let p1 = CGPoint(
+                x: paper.minX + segment.start.x * scale,
+                y: paper.minY + (layout.sheetSize.height - segment.start.y) * scale
+            )
+            let p2 = CGPoint(
+                x: paper.minX + segment.end.x * scale,
+                y: paper.minY + (layout.sheetSize.height - segment.end.y) * scale
+            )
+            marks.move(to: p1)
+            marks.line(to: p2)
         }
-
-        func y(_ value: CGFloat) -> CGFloat {
-            page.minY + (paperSize.height - value) * scale
-        }
-
-        let path = NSBezierPath()
-        path.lineWidth = max(0.35, 0.5 * scale)
-        NSColor.black.withAlphaComponent(0.5).setStroke()
-
-        switch cutStyle {
-        case .fullLines:
-            for position in geometry.verticalCutPositions {
-                path.move(to: CGPoint(x: x(position), y: page.minY))
-                path.line(to: CGPoint(x: x(position), y: page.maxY))
-            }
-            for position in geometry.horizontalCutPositions {
-                path.move(to: CGPoint(x: page.minX, y: y(position)))
-                path.line(to: CGPoint(x: page.maxX, y: y(position)))
-            }
-
-        case .edgeMarks:
-            let gap = 1.5 * scale
-            let topGrid = y(geometry.gridRect.maxY)
-            let bottomGrid = y(geometry.gridRect.minY)
-            let leftGrid = x(geometry.gridRect.minX)
-            let rightGrid = x(geometry.gridRect.maxX)
-
-            for position in geometry.verticalCutPositions {
-                let px = x(position)
-                path.move(to: CGPoint(x: px, y: page.minY))
-                path.line(to: CGPoint(x: px, y: max(page.minY, topGrid - gap)))
-                path.move(to: CGPoint(x: px, y: min(page.maxY, bottomGrid + gap)))
-                path.line(to: CGPoint(x: px, y: page.maxY))
-            }
-
-            for position in geometry.horizontalCutPositions {
-                let py = y(position)
-                path.move(to: CGPoint(x: page.minX, y: py))
-                path.line(to: CGPoint(x: max(page.minX, leftGrid - gap), y: py))
-                path.move(to: CGPoint(x: min(page.maxX, rightGrid + gap), y: py))
-                path.line(to: CGPoint(x: page.maxX, y: py))
-            }
-        }
-
-        path.stroke()
+        marks.stroke()
     }
 }
 
@@ -414,20 +389,17 @@ final class PreviewGrid {
         slots[visualIndex]
     }
 
-    func configureSheet(
-        paperSize: CGSize,
-        cardSize: CGSize,
-        cutStyle: PnPCutStyle
-    ) {
-        canvas.configure(
-            paperSize: paperSize,
-            cardSize: cardSize,
-            cutStyle: cutStyle
-        )
+    func configureSheet(layout: PnPSheetLayout) {
+        canvas.configure(layout: layout)
     }
 }
 final class MainWindowController: NSWindowController {
-    private var pairs: [CardPair] = []
+    private var deck = PnPDeck()
+    private var pairs: [PnPCardPair] {
+        get { deck.cards }
+        set { deck.cards = newValue }
+    }
+    private var highlightedPairIndex: Int?
     private var temporaryOutputs: [URL] = []
     private var currentSheet = 0
 
@@ -850,7 +822,7 @@ final class MainWindowController: NSWindowController {
 
     private func ensurePairCount(_ count: Int) {
         while pairs.count < count {
-            pairs.append(CardPair())
+            pairs.append(PnPCardPair())
         }
     }
 
@@ -979,16 +951,15 @@ final class MainWindowController: NSWindowController {
         let paper = PnPPaperSize.allCases[paperPopup.indexOfSelectedItem]
         let cutStyle: PnPCutStyle = cutPopup.indexOfSelectedItem == 0 ? .edgeMarks : .fullLines
         let previewCardSize = currentPreviewCardSize()
-        frontPreview.configureSheet(
-            paperSize: paper.size,
+        let sheetLayout = PnPSheetLayout(
             cardSize: previewCardSize,
-            cutStyle: cutStyle
+            sheetSize: paper.size,
+            cutStyle: cutStyle,
+            bleed: selectedBleed.points
         )
-        backPreview.configureSheet(
-            paperSize: paper.size,
-            cardSize: previewCardSize,
-            cutStyle: cutStyle
-        )
+        frontPreview.configureSheet(layout: sheetLayout)
+        backPreview.configureSheet(layout: sheetLayout)
+        updateLinkedHighlight()
 
         sheetLabel.stringValue = "Sheet \(currentSheet + 1) of \(sheetCount)"
         previousButton.isEnabled = currentSheet > 0
