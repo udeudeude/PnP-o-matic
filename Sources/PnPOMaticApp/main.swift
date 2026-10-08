@@ -498,11 +498,24 @@ final class MainWindowController: NSWindowController {
         appendAssets(urls.flatMap(PnPImposer.assets(from:)), to: .front)
     }
 
-    func cleanupTemporaryOutputs() {
-        for output in temporaryOutputs {
-            try? FileManager.default.removeItem(at: output)
+    func cleanupOldTemporaryOutputs() {
+        // Avoid deleting PDFs that Preview may still be opening after app exit.
+        // Expire stale outputs when the app starts again.
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PnP-o-matic", isDirectory: true)
+        let fm = FileManager.default
+        let urls = (try? fm.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        let cutoff = Date().addingTimeInterval(-24 * 60 * 60)
+        for url in urls where url.pathExtension.lowercased() == "pdf" {
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+            if let date = values?.contentModificationDate, date < cutoff {
+                try? fm.removeItem(at: url)
+            }
         }
-        temporaryOutputs.removeAll()
     }
 
     private func buildUI() {
@@ -1262,6 +1275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = MainWindowController()
         mainWindowController = controller
         controller.showWindow(nil)
+        controller.cleanupOldTemporaryOutputs()
         NSApp.activate(ignoringOtherApps: true)
 
         if !pendingOpenURLs.isEmpty {
@@ -1285,10 +1299,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         sender.reply(toOpenOrPrint: .success)
-    }
-
-    func applicationWillTerminate(_ notification: Notification) {
-        mainWindowController?.cleanupTemporaryOutputs()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
