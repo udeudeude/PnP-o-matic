@@ -797,7 +797,7 @@ final class MainWindowController: NSWindowController {
 
     private func appendAssets(_ assets: [PnPCardAsset], to side: PnPCardSide) {
         guard !assets.isEmpty else { return }
-
+        let before = deck
         let start = nextInsertionIndex(for: side)
         ensurePairCount(start + assets.count)
 
@@ -807,13 +807,14 @@ final class MainWindowController: NSWindowController {
 
         currentSheet = start / 9
         trimTrailingEmptyPairs()
+        registerEdit(before, title: "Add Cards")
         refresh()
     }
 
     private func appendAlternatingPDF(_ url: URL) {
         let assets = PnPImposer.assets(from: url)
         guard !assets.isEmpty else { return }
-
+        let before = deck
         let start = pairs.count
         let pairCount = (assets.count + 1) / 2
         ensurePairCount(start + pairCount)
@@ -828,19 +829,25 @@ final class MainWindowController: NSWindowController {
         }
 
         currentSheet = start / 9
+        registerEdit(before, title: "Import Alternating Cards")
         refresh()
+        if !assets.count.isMultiple(of: 2) {
+            showAlert(message: "Odd page count",
+                      detail: "The final front has no corresponding back.")
+        }
     }
 
     private func drop(urls: [URL], on side: PnPCardSide, at index: Int) {
         let assets = urls.flatMap(PnPImposer.assets(from:))
         guard !assets.isEmpty else { return }
-
+        let before = deck
         ensurePairCount(index + assets.count)
         for (offset, asset) in assets.enumerated() {
             set(asset: asset, side: side, at: index + offset)
         }
 
         trimTrailingEmptyPairs()
+        registerEdit(before, title: "Replace Cards")
         refresh()
     }
 
@@ -850,34 +857,15 @@ final class MainWindowController: NSWindowController {
             return
         }
 
-        ensurePairCount(max(source, destination) + 1)
-
-        if lockSwitch.state == .on {
-            let pair = pairs.remove(at: source)
-            pairs.insert(pair, at: min(destination, pairs.count))
-        } else {
-            var values = pairs.map { pair -> PnPCardAsset? in
-                side == .front ? pair.front : pair.back
-            }
-            let value = values.remove(at: source)
-            values.insert(value, at: min(destination, values.count))
-
-            for index in values.indices {
-                if side == .front {
-                    pairs[index].front = values[index]
-                } else {
-                    pairs[index].back = values[index]
-                }
-            }
-        }
-
-        trimTrailingEmptyPairs()
+        let before = deck
+        deck.move(side: side, from: source, to: destination, paired: lockSwitch.state == .on)
+        registerEdit(before, title: "Rearrange Cards")
         refresh()
     }
 
     private func clear(side: PnPCardSide, at index: Int) {
         guard pairs.indices.contains(index) else { return }
-
+        let before = deck
         if side == .front {
             pairs[index].front = nil
         } else {
@@ -885,6 +873,7 @@ final class MainWindowController: NSWindowController {
         }
 
         trimTrailingEmptyPairs()
+        registerEdit(before, title: "Clear Card")
         refresh()
     }
 
@@ -1086,6 +1075,17 @@ final class MainWindowController: NSWindowController {
     }
 
     @objc private func makePDF() {
+        let hasFronts = deck.cards.contains { $0.front != nil }
+        let hasBacks = deck.cards.contains { $0.back != nil }
+        if hasFronts && hasBacks && (!deck.missingBacks.isEmpty || !deck.missingFronts.isEmpty) {
+            let alert = NSAlert()
+            alert.messageText = "Unmatched card fronts and backs"
+            alert.informativeText = "\(deck.missingBacks.count) missing backs and \(deck.missingFronts.count) missing fronts. Blank positions will be printed. Continue?"
+            alert.addButton(withTitle: "Continue")
+            alert.addButton(withTitle: "Cancel")
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+        }
+
         let paper = PnPPaperSize.allCases[paperPopup.indexOfSelectedItem]
         let cutStyle: PnPCutStyle = cutPopup.indexOfSelectedItem == 0 ? .edgeMarks : .fullLines
         let cardSizePreset = PnPCardSizePreset.allCases[cardSizePopup.indexOfSelectedItem]
