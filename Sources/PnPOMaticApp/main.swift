@@ -263,6 +263,10 @@ final class CardSlotView: NSView, NSDraggingSource {
     }
 }
 
+final class FlippedDocumentView: NSView {
+    override var isFlipped: Bool { true }
+}
+
 final class SheetCanvasView: NSView {
     let slots: [CardSlotView]
     private var sheetLayout = PnPSheetLayout(
@@ -528,7 +532,7 @@ final class MainWindowController: NSWindowController {
         scroller.drawsBackground = false
         scroller.borderType = .noBorder
 
-        let document = NSView()
+        let document = FlippedDocumentView()
         document.translatesAutoresizingMaskIntoConstraints = false
         scroller.documentView = document
         content.addSubview(scroller)
