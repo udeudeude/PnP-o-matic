@@ -7,7 +7,11 @@ extension NSPasteboard.PasteboardType {
     static let pnpCardSlot = NSPasteboard.PasteboardType("com.udeudeude.pnpomatic.card-slot")
 }
 
-private func thumbnail(for asset: PnPCardAsset?, size: NSSize) -> NSImage? {
+private func thumbnail(
+    for asset: PnPCardAsset?,
+    size: NSSize,
+    bounds: PnPArtworkBounds = .automatic
+) -> NSImage? {
     guard let asset else { return nil }
 
     switch asset {
@@ -16,10 +20,30 @@ private func thumbnail(for asset: PnPCardAsset?, size: NSSize) -> NSImage? {
               let page = document.page(at: pageIndex) else {
             return nil
         }
-        return page.thumbnail(of: size, for: .cropBox)
+        return page.thumbnail(of: size, for: PnPImposer.resolvedPDFBox(page, choice: bounds))
 
     case .image(let url):
         return NSImage(contentsOf: url)
+    }
+}
+
+final class ArtworkPreviewView: NSView {
+    var image: NSImage? { didSet { needsDisplay = true } }
+    var fit: PnPArtworkFit = .fit { didSet { needsDisplay = true } }
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard let image, image.size.width > 0, image.size.height > 0 else { return }
+        let target = PnPImposer.fittedRect(
+            sourceSize: image.size,
+            in: bounds,
+            fit: fit
+        )
+        NSGraphicsContext.saveGraphicsState()
+        NSBezierPath(rect: bounds).addClip()
+        image.draw(in: target, from: .zero, operation: .sourceOver, fraction: 1)
+        NSGraphicsContext.restoreGraphicsState()
     }
 }
 
@@ -31,7 +55,7 @@ final class CardSlotView: NSView, NSDraggingSource {
     var onClear: ((PnPCardSide, Int) -> Void)?
     var onHover: ((Int?) -> Void)?
 
-    private let imageView = NSImageView()
+    private let imageView = ArtworkPreviewView()
     private let numberLabel = NSTextField(labelWithString: "")
     private let sourceLabel = NSTextField(labelWithString: "")
     private var asset: PnPCardAsset?
@@ -50,7 +74,6 @@ final class CardSlotView: NSView, NSDraggingSource {
 
         registerForDraggedTypes([.pnpCardSlot, .fileURL])
 
-        imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(imageView)
 
@@ -98,14 +121,17 @@ final class CardSlotView: NSView, NSDraggingSource {
         side: PnPCardSide,
         globalIndex: Int,
         number: Int,
-        asset: PnPCardAsset?
+        asset: PnPCardAsset?,
+        fit: PnPArtworkFit,
+        artworkBounds: PnPArtworkBounds
     ) {
         self.side = side
         self.globalIndex = globalIndex
         self.asset = asset
 
         numberLabel.stringValue = "#\(number)"
-        imageView.image = thumbnail(for: asset, size: NSSize(width: 210, height: 290))
+        imageView.image = thumbnail(for: asset, size: NSSize(width: 240, height: 320), bounds: artworkBounds)
+        imageView.fit = fit
         sourceLabel.stringValue = asset?.sourceName ?? "Drop PDF / image"
 
         if asset == nil {
@@ -420,7 +446,13 @@ final class MainWindowController: NSWindowController {
     private let paperPopup = NSPopUpButton()
     private let cutPopup = NSPopUpButton()
     private let duplexPopup = NSPopUpButton()
+    private let fitPopup = NSPopUpButton()
+    private let artworkBoundsPopup = NSPopUpButton()
+    private let bleedPopup = NSPopUpButton()
     private let lockSwitch = NSSwitch()
+    private let undoButton = NSButton(title: "Undo", target: nil, action: nil)
+    private let redoButton = NSButton(title: "Redo", target: nil, action: nil)
+    private let warningsLabel = NSTextField(wrappingLabelWithString: "")
 
     init() {
         frontPreview = PreviewGrid(
@@ -510,13 +542,22 @@ final class MainWindowController: NSWindowController {
             action: #selector(importAlternating)
         )
         importRow.addArrangedSubview(alternating)
+        importRow.addArrangedSubview(
+            NSButton(title: "Import First Half / Second Half…",
+                     target: self, action: #selector(importHalves))
+        )
+        importRow.addArrangedSubview(
+            NSButton(title: "Repeat One Back…",
+                     target: self, action: #selector(importCommonBack))
+        )
         let importHelp = NSTextField(
             labelWithString: "For separate PDFs, use Add Fronts and Add Backs. Pages pair by card number."
         )
         importHelp.textColor = .secondaryLabelColor
         importHelp.font = NSFont.systemFont(ofSize: 11)
-        importRow.addArrangedSubview(importHelp)
+        // The explanation sits below the actions so the row works on smaller Mac screens.
         root.addArrangedSubview(importRow)
+        root.addArrangedSubview(importHelp)
 
         let previews = NSStackView()
         previews.orientation = .horizontal
@@ -622,6 +663,48 @@ final class MainWindowController: NSWindowController {
 
         root.addArrangedSubview(options2)
 
+        let options3 = NSStackView()
+        options3.orientation = .horizontal
+        options3.alignment = .centerY
+        options3.spacing = 9
+
+        options3.addArrangedSubview(NSTextField(labelWithString: "Artwork:"))
+        fitPopup.addItems(withTitles: PnPArtworkFit.allCases.map(\.displayName))
+        fitPopup.target = self
+        fitPopup.action = #selector(previewOptionsChanged)
+        options3.addArrangedSubview(fitPopup)
+
+        options3.addArrangedSubview(NSTextField(labelWithString: "PDF bounds:"))
+        artworkBoundsPopup.addItems(withTitles: PnPArtworkBounds.allCases.map(\.displayName))
+        artworkBoundsPopup.target = self
+        artworkBoundsPopup.action = #selector(previewOptionsChanged)
+        options3.addArrangedSubview(artworkBoundsPopup)
+
+        options3.addArrangedSubview(NSTextField(labelWithString: "Bleed:"))
+        bleedPopup.addItems(withTitles: PnPBleed.allCases.map(\.displayName))
+        bleedPopup.target = self
+        bleedPopup.action = #selector(previewOptionsChanged)
+        options3.addArrangedSubview(bleedPopup)
+        root.addArrangedSubview(options3)
+
+        undoButton.target = self
+        undoButton.action = #selector(undoEdit)
+        undoButton.keyEquivalent = "z"
+        undoButton.keyEquivalentModifierMask = [.command]
+        redoButton.target = self
+        redoButton.action = #selector(redoEdit)
+        redoButton.keyEquivalent = "z"
+        redoButton.keyEquivalentModifierMask = [.command, .shift]
+        let editRow = NSStackView()
+        editRow.orientation = .horizontal
+        editRow.spacing = 8
+        editRow.addArrangedSubview(undoButton)
+        editRow.addArrangedSubview(redoButton)
+        warningsLabel.textColor = .systemOrange
+        warningsLabel.font = NSFont.systemFont(ofSize: 11)
+        editRow.addArrangedSubview(warningsLabel)
+        root.addArrangedSubview(editRow)
+
         let footer = NSStackView()
         footer.orientation = .horizontal
         footer.alignment = .centerY
@@ -658,6 +741,10 @@ final class MainWindowController: NSWindowController {
                 }
                 slot.onClear = { [weak self] side, index in
                     self?.clear(side: side, at: index)
+                }
+                slot.onHover = { [weak self] index in
+                    self?.highlightedPairIndex = index
+                    self?.updateLinkedHighlight()
                 }
             }
         }
@@ -843,6 +930,18 @@ final class MainWindowController: NSWindowController {
         duplexPopup.indexOfSelectedItem == 0 ? .longEdge : .shortEdge
     }
 
+    private var selectedBleed: PnPBleed {
+        PnPBleed.allCases[bleedPopup.indexOfSelectedItem]
+    }
+
+    private var selectedFit: PnPArtworkFit {
+        PnPArtworkFit.allCases[fitPopup.indexOfSelectedItem]
+    }
+
+    private var selectedArtworkBounds: PnPArtworkBounds {
+        PnPArtworkBounds.allCases[artworkBoundsPopup.indexOfSelectedItem]
+    }
+
     @objc private func previousSheet() {
         currentSheet = max(0, currentSheet - 1)
         refresh()
@@ -891,26 +990,24 @@ final class MainWindowController: NSWindowController {
         let firstAsset = pairs.compactMap(\.front).first
             ?? pairs.compactMap(\.back).first
 
-        if let firstAsset {
-            switch firstAsset {
-            case .pdfPage(let url, let pageIndex):
-                if let document = PDFDocument(url: url),
-                   let page = document.page(at: pageIndex) {
-                    let size = page.bounds(for: .cropBox).size
-                    if size.width > 0 && size.height > 0 {
-                        return size
-                    }
-                }
-            case .image(let url):
-                if let image = NSImage(contentsOf: url),
-                   image.size.width > 0,
-                   image.size.height > 0 {
-                    return image.size
-                }
-            }
+        if let firstAsset,
+           let size = PnPImposer.sourceSize(for: firstAsset, bounds: selectedArtworkBounds),
+           size.width > 0, size.height > 0 {
+            return size
         }
 
         return PnPCardSizePreset.poker.fixedSize ?? CGSize(width: 180, height: 252)
+    }
+
+    private func updateLinkedHighlight() {
+        for visualIndex in 0..<9 {
+            for preview in [frontPreview, backPreview] {
+                let slot = preview.slot(at: visualIndex)
+                slot.setLinkedHighlight(
+                    highlightedPairIndex != nil && slot.globalIndex == highlightedPairIndex
+                )
+            }
+        }
     }
 
     private func refresh() {
@@ -925,7 +1022,9 @@ final class MainWindowController: NSWindowController {
                 side: .front,
                 globalIndex: frontIndex,
                 number: frontIndex + 1,
-                asset: frontAsset
+                asset: frontAsset,
+                fit: selectedFit,
+                artworkBounds: selectedArtworkBounds
             )
 
             let backLogicalSlot = PnPImposer.mirroredSlot(visualSlot, flip: flip)
@@ -935,7 +1034,9 @@ final class MainWindowController: NSWindowController {
                 side: .back,
                 globalIndex: backIndex,
                 number: backIndex + 1,
-                asset: backAsset
+                asset: backAsset,
+                fit: selectedFit,
+                artworkBounds: selectedArtworkBounds
             )
         }
 
@@ -962,6 +1063,19 @@ final class MainWindowController: NSWindowController {
         updateLinkedHighlight()
 
         sheetLabel.stringValue = "Sheet \(currentSheet + 1) of \(sheetCount)"
+        let unmatched = !deck.cards.compactMap(\.back).isEmpty
+            && !deck.cards.compactMap(\.front).isEmpty
+        let missingBacks = unmatched ? deck.missingBacks : []
+        let missingFronts = unmatched ? deck.missingFronts : []
+        var notices: [String] = []
+        if !missingBacks.isEmpty { notices.append("Missing backs: \(missingBacks.prefix(8).map(String.init).joined(separator: ", "))") }
+        if !missingFronts.isEmpty { notices.append("Missing fronts: \(missingFronts.prefix(8).map(String.init).joined(separator: ", "))") }
+        if sheetLayout.geometry.scale < 0.999 {
+            notices.append("Scaled to \(Int(sheetLayout.geometry.scale * 100))% to fit sheet")
+        }
+        warningsLabel.stringValue = notices.joined(separator: "   •   ")
+        undoButton.isEnabled = window?.undoManager?.canUndo ?? false
+        redoButton.isEnabled = window?.undoManager?.canRedo ?? false
         previousButton.isEnabled = currentSheet > 0
         nextButton.isEnabled = currentSheet + 1 < sheetCount
 
@@ -1019,7 +1133,10 @@ final class MainWindowController: NSWindowController {
                 cutStyle: cutStyle,
                 cardSizePreset: cardSizePreset,
                 customCardSize: customCardSize,
-                duplexFlip: selectedDuplexFlip
+                duplexFlip: selectedDuplexFlip,
+                fit: selectedFit,
+                artworkBounds: selectedArtworkBounds,
+                bleed: selectedBleed
             )
             temporaryOutputs.append(outputURL)
 
@@ -1056,6 +1173,71 @@ final class MainWindowController: NSWindowController {
             }
         } else {
             NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc private func undoEdit() {
+        window?.undoManager?.undo()
+        refresh()
+    }
+
+    @objc private func redoEdit() {
+        window?.undoManager?.redo()
+        refresh()
+    }
+
+    private func registerEdit(_ prior: PnPDeck, title: String) {
+        guard prior != deck else { return }
+        window?.undoManager?.registerUndo(withTarget: self) { target in
+            target.restoreDeck(prior, title: title)
+        }
+        window?.undoManager?.setActionName(title)
+    }
+
+    private func restoreDeck(_ snapshot: PnPDeck, title: String) {
+        let prior = deck
+        deck = snapshot
+        registerEdit(prior, title: title)
+        currentSheet = min(currentSheet, sheetCount - 1)
+        refresh()
+    }
+
+    @objc private func importHalves() {
+        chooseOnePDF(message: "First half fronts, second half matching backs") { [weak self] url in
+            guard let self else { return }
+            let assets = PnPImposer.assets(from: url)
+            let before = self.deck
+            self.deck.addHalves(assets)
+            self.registerEdit(before, title: "Import Halves")
+            self.currentSheet = max(0, (self.deck.cards.count - 1) / 9)
+            self.refresh()
+            if !assets.count.isMultiple(of: 2) {
+                self.showAlert(message: "Odd page count",
+                               detail: "This file has an extra front without a matching back.")
+            }
+        }
+    }
+
+    @objc private func importCommonBack() {
+        chooseAssets(message: "Choose one back image or one-page PDF") { [weak self] urls in
+            guard let self, let first = urls.first,
+                  let asset = PnPImposer.assets(from: first).first else { return }
+            let before = self.deck
+            self.deck.repeatBack(asset)
+            self.registerEdit(before, title: "Repeat Common Back")
+            self.refresh()
+        }
+    }
+
+    private func chooseOnePDF(message: String, completion: @escaping (URL) -> Void) {
+        guard let window else { return }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.message = message
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.beginSheetModal(for: window) { result in
+            if result == .OK, let url = panel.url { completion(url) }
         }
     }
 
