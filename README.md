@@ -91,7 +91,7 @@ Thin horizontal and vertical cut lines run across the complete sheet at every ca
 
 **Tarot-size cards cannot fit nine at 100% on US Letter or A4**. The UI displays the resulting scale when you choose a larger card size or enable 3 mm bleed.
 
-Three-millimetre bleed cannot simply overlap neighboring cards; the spacing is included in the sheet geometry. Verify registration and any bleed details using a small physical test batch before printing a complete deck.
+Three-millimetre bleed cannot simply overlap neighboring cards; the spacing is included in the sheet geometry. Exact-size layouts with unusually narrow margins (such as Euro cards on Letter) are flagged; A4 may provide more printable margin. Verify registration and any bleed details using a small physical test batch before printing a complete deck.
 
 Output PDFs remain available for Preview after the editor closes. Temporary files older than 24 hours are removed when PnP-o-matic starts again.
 

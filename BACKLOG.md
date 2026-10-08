@@ -19,6 +19,8 @@ This is the **project backlog**, the working list of improvements, defects, vali
 - [x] Side-by-side preview sheets and correct duplex long/short-edge back positions.
 - [x] PDF and image drop per card, separate/alternating PDF import, pair-lock switch, drag rearranging.
 - [x] Letter/A4 sheet output; margin-only or full-length cut lines; Preview output; user-level Mac installer.
+- [x] Vertically scrollable editor so additional options remain reachable on smaller laptop windows.
+- [x] Keep temporary export PDFs accessible after closing the editor; purge PDFs older than 24 hours on a subsequent launch.
 
 ## Verify before public release (highest priority)
 
@@ -66,7 +68,7 @@ This is the **project backlog**, the working list of improvements, defects, vali
 - [ ] More pixel-level PDF tests for visual mirroring and bleed/CropBox/TrimBox content, not only page counts and transforms.
 - [ ] Document file import order and drag/drop edge cases with UI tests or controlled test harness.
 - [ ] Detect and explain nonstandard PDF rotations and page-size changes mid-document.
-- [ ] Limit and purge stale temporary outputs with an age-based cleanup policy, preserving files currently open in Preview.
+- [ ] Detect when a stale temporary PDF is still open in Preview before pruning it; offer a Save As reminder.
 - [ ] Consider explicit warning for unnotarized Mac builds; paid Apple Developer ID signing/notarization remains optional.
 - [ ] Audit accessibility: VoiceOver labels, keyboard card navigation, contrast and scalable UI.
 - [ ] Optimize startup, thumbnails and long-deck memory usage.
