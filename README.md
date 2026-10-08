@@ -4,7 +4,7 @@ A native macOS print-and-play layout utility for building duplex-ready **3×3 ca
 
 ## Workspace
 
-PnP-o-matic shows **Fronts** and **Backs** side by side as numbered 3×3 previews.
+PnP-o-matic shows **Fronts** and **Backs** side by side as miniature printed sheets. Each preview includes the page boundary, the nine card positions, empty slots, card numbers, and the selected trim-line style so the workspace closely matches the PDF it will generate.
 
 - Front slots are numbered **1-2-3 / 4-5-6 / 7-8-9**.
 - With normal portrait **long-edge duplex**, the back preview is physically mirrored as **3-2-1 / 6-5-4 / 9-8-7** so each printed back lands behind its corresponding front.
