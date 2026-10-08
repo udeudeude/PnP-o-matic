@@ -521,19 +521,39 @@ final class MainWindowController: NSWindowController {
     private func buildUI() {
         guard let content = window?.contentView else { return }
 
+        let scroller = NSScrollView()
+        scroller.translatesAutoresizingMaskIntoConstraints = false
+        scroller.hasVerticalScroller = true
+        scroller.autohidesScrollers = true
+        scroller.drawsBackground = false
+        scroller.borderType = .noBorder
+
+        let document = NSView()
+        document.translatesAutoresizingMaskIntoConstraints = false
+        scroller.documentView = document
+        content.addSubview(scroller)
+
         let root = NSStackView()
         root.orientation = .vertical
         root.alignment = .leading
         root.spacing = 12
         root.edgeInsets = NSEdgeInsets(top: 18, left: 18, bottom: 18, right: 18)
         root.translatesAutoresizingMaskIntoConstraints = false
-        content.addSubview(root)
+        document.addSubview(root)
 
         NSLayoutConstraint.activate([
-            root.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            root.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            root.topAnchor.constraint(equalTo: content.topAnchor),
-            root.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+            scroller.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            scroller.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            scroller.topAnchor.constraint(equalTo: content.topAnchor),
+            scroller.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+
+            document.widthAnchor.constraint(equalTo: scroller.contentView.widthAnchor),
+            document.heightAnchor.constraint(greaterThanOrEqualTo: scroller.contentView.heightAnchor),
+
+            root.leadingAnchor.constraint(equalTo: document.leadingAnchor),
+            root.trailingAnchor.constraint(equalTo: document.trailingAnchor),
+            root.topAnchor.constraint(equalTo: document.topAnchor),
+            root.bottomAnchor.constraint(equalTo: document.bottomAnchor),
         ])
 
         let title = NSTextField(labelWithString: "PnP-o-matic")
