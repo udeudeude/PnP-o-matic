@@ -26,8 +26,13 @@ public struct PnPSheetLayout {
         let requestedBleed = max(0, bleed)
         let width = 3 * cardSize.width + 6 * requestedBleed
         let height = 3 * cardSize.height + 6 * requestedBleed
-        let scale = cardSize.width > 0 && cardSize.height > 0
-            ? min(1, sheetSize.width / width, sheetSize.height / height) : 0
+        // Reserve a minimum 0.25-inch outer margin for printer tolerance and
+        // external cut marks. Poker 3x3 still fits Letter at 100%.
+        let margin: CGFloat = 18
+        let printableWidth = max(0, sheetSize.width - margin * 2)
+        let printableHeight = max(0, sheetSize.height - margin * 2)
+        let scale = cardSize.width > 0 && cardSize.height > 0 && width > 0 && height > 0
+            ? min(1, printableWidth / width, printableHeight / height) : 0
         self.bleed = requestedBleed * scale
 
         let scaledCard = CGSize(width: cardSize.width * scale, height: cardSize.height * scale)
