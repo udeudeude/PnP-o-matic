@@ -3,6 +3,11 @@ import PDFKit
 import PnPCore
 import UniformTypeIdentifiers
 
+private let pnpProjectType = UTType(
+    exportedAs: "com.udeudeude.pnpomatic.project",
+    conformingTo: .json
+)
+
 extension NSPasteboard.PasteboardType {
     static let pnpCardSlot = NSPasteboard.PasteboardType("com.udeudeude.pnpomatic.card-slot")
     static let pnpCardFill = NSPasteboard.PasteboardType("com.udeudeude.pnpomatic.card-fill")
@@ -505,7 +510,7 @@ final class PreviewGrid {
         canvas.configure(layout: layout)
     }
 }
-final class MainWindowController: NSWindowController {
+final class MainWindowController: NSWindowController, NSWindowDelegate {
     private var deck = PnPDeck()
     private var pairs: [PnPCardPair] {
         get { deck.cards }
@@ -516,6 +521,9 @@ final class MainWindowController: NSWindowController {
     private var fillDrag: (side: PnPCardSide, source: Int, visited: Set<Int>)?
     private var temporaryOutputs: [URL] = []
     private var currentSheet = 0
+    private var currentProjectURL: URL?
+    private var savedDeck = PnPDeck()
+    private var savedSettings = PnPProjectSettings()
 
     private let frontPreview: PreviewGrid
     private let backPreview: PreviewGrid
@@ -581,6 +589,7 @@ final class MainWindowController: NSWindowController {
         window.minSize = NSSize(width: 860, height: 740)
 
         super.init(window: window)
+        window.delegate = self
 
         frontPreview.addButton.target = self
         backPreview.addButton.target = self
@@ -596,7 +605,13 @@ final class MainWindowController: NSWindowController {
     }
 
     func addPDFURLs(_ urls: [URL]) {
-        appendAssets(urls.flatMap(PnPImposer.assets(from:)), to: .front)
+        if let projectURL = urls.first(where: {
+            $0.pathExtension.lowercased() == "pnpomatic"
+        }) {
+            openProject(at: projectURL)
+        }
+        let artworks = urls.filter { $0.pathExtension.lowercased() != "pnpomatic" }
+        appendAssets(artworks.flatMap(PnPImposer.assets(from:)), to: .front)
     }
 
     func cleanupOldTemporaryOutputs() {
@@ -667,6 +682,29 @@ final class MainWindowController: NSWindowController {
         subtitle.textColor = .secondaryLabelColor
         root.addArrangedSubview(subtitle)
 
+        let projectRow = NSStackView()
+        projectRow.orientation = .horizontal
+        projectRow.spacing = 8
+        let openProjectButton = NSButton(
+            title: "Open Project…", target: self, action: #selector(chooseProject)
+        )
+        openProjectButton.keyEquivalent = "o"
+        openProjectButton.keyEquivalentModifierMask = [.command]
+        let saveProjectButton = NSButton(
+            title: "Save Project", target: self, action: #selector(saveProject)
+        )
+        saveProjectButton.keyEquivalent = "s"
+        saveProjectButton.keyEquivalentModifierMask = [.command]
+        let saveAsButton = NSButton(
+            title: "Save As…", target: self, action: #selector(saveProjectAs)
+        )
+        saveAsButton.keyEquivalent = "S"
+        saveAsButton.keyEquivalentModifierMask = [.command, .shift]
+        projectRow.addArrangedSubview(openProjectButton)
+        projectRow.addArrangedSubview(saveProjectButton)
+        projectRow.addArrangedSubview(saveAsButton)
+        root.addArrangedSubview(projectRow)
+
         let importRow = NSStackView()
         importRow.orientation = .horizontal
         importRow.spacing = 8
@@ -711,6 +749,8 @@ final class MainWindowController: NSWindowController {
         lockTitle.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
         pairLockControls.addArrangedSubview(lockTitle)
         lockSwitch.state = .on
+        lockSwitch.target = self
+        lockSwitch.action = #selector(previewOptionsChanged)
         lockSwitch.toolTip = "On: dragging either side moves its matching card. Off: rearrange each side independently."
         pairLockControls.addArrangedSubview(lockSwitch)
         let lockDetail = NSTextField(wrappingLabelWithString: "Move together")
@@ -932,6 +972,218 @@ final class MainWindowController: NSWindowController {
                     self?.updateLinkedHighlight()
                 }
             }
+        }
+    }
+
+
+    // MARK: - Reopenable project documents
+
+    private func currentProjectSettings() -> PnPProjectSettings {
+        PnPProjectSettings(
+            cardSize: PnPCardSizePreset.allCases[cardSizePopup.indexOfSelectedItem],
+            customWidth: customWidthField.stringValue,
+            customHeight: customHeightField.stringValue,
+            customUnit: customUnitPopup.indexOfSelectedItem == 0 ? "in" : "mm",
+            paper: PnPPaperSize.allCases[paperPopup.indexOfSelectedItem],
+            orientation: selectedOrientation,
+            cutStyle: cutPopup.indexOfSelectedItem == 0 ? .edgeMarks : .fullLines,
+            duplexFlip: selectedDuplexFlip,
+            artworkFit: selectedFit,
+            artworkBounds: selectedArtworkBounds,
+            bleed: selectedBleed,
+            lockPairs: lockSwitch.state == .on
+        )
+    }
+
+    private func applyProjectSettings(_ settings: PnPProjectSettings) {
+        cardSizePopup.selectItem(at: PnPCardSizePreset.allCases.firstIndex(of: settings.cardSize)!)
+        customWidthField.stringValue = settings.customWidth
+        customHeightField.stringValue = settings.customHeight
+        customUnitPopup.selectItem(at: settings.customUnit == "mm" ? 1 : 0)
+        customSizeControls.isHidden = settings.cardSize != .custom
+        paperPopup.selectItem(at: PnPPaperSize.allCases.firstIndex(of: settings.paper)!)
+        orientationPopup.selectItem(at: PnPPaperOrientation.allCases.firstIndex(of: settings.orientation)!)
+        cutPopup.selectItem(at: settings.cutStyle == .edgeMarks ? 0 : 1)
+        duplexPopup.selectItem(at: settings.duplexFlip == .longEdge ? 0 : 1)
+        fitPopup.selectItem(at: PnPArtworkFit.allCases.firstIndex(of: settings.artworkFit)!)
+        artworkBoundsPopup.selectItem(at: PnPArtworkBounds.allCases.firstIndex(of: settings.artworkBounds)!)
+        bleedPopup.selectItem(at: PnPBleed.allCases.firstIndex(of: settings.bleed)!)
+        lockSwitch.state = settings.lockPairs ? .on : .off
+    }
+
+    private var projectIsEdited: Bool {
+        deck != savedDeck || currentProjectSettings() != savedSettings
+    }
+
+    private func updateProjectEditedState() {
+        window?.isDocumentEdited = projectIsEdited
+        let name = currentProjectURL?.lastPathComponent ?? "Untitled"
+        window?.title = "PnP-o-matic — \(name)"
+    }
+
+    @objc private func saveProject() {
+        _ = saveProjectDocument(saveAs: false)
+    }
+
+    @objc private func saveProjectAs() {
+        _ = saveProjectDocument(saveAs: true)
+    }
+
+    @discardableResult
+    private func saveProjectDocument(saveAs: Bool) -> Bool {
+        var destination = saveAs ? nil : currentProjectURL
+        if destination == nil {
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [pnpProjectType]
+            panel.nameFieldStringValue = currentProjectURL?.lastPathComponent ?? "Cards.pnpomatic"
+            panel.message = "Save the editable deck and print settings. Original artwork remains in its own files."
+            guard panel.runModal() == .OK, let chosen = panel.url else { return false }
+            destination = chosen
+        }
+        guard let url = destination else { return false }
+        do {
+            let project = PnPProjectFile(
+                deck: deck, settings: currentProjectSettings(), relativeTo: url
+            )
+            try project.write(to: url)
+            currentProjectURL = url
+            savedDeck = deck
+            savedSettings = currentProjectSettings()
+            updateProjectEditedState()
+            return true
+        } catch {
+            showAlert(message: "Could not save project", detail: error.localizedDescription)
+            return false
+        }
+    }
+
+    /// Protect a newly edited or previously opened deck before replacing it.
+    private func confirmReplaceIfEdited() -> Bool {
+        guard projectIsEdited else { return true }
+        let alert = NSAlert()
+        alert.messageText = "Save your changes?"
+        alert.informativeText = "The current deck has changes that have not been saved in a .pnpomatic project."
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Discard")
+        alert.addButton(withTitle: "Cancel")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return saveProjectDocument(saveAs: false)
+        case .alertSecondButtonReturn:
+            return true
+        default:
+            return false
+        }
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        confirmReplaceIfEdited()
+    }
+
+    @objc private func chooseProject() {
+        guard confirmReplaceIfEdited() else { return }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [pnpProjectType]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.message = "Open a saved PnP-o-matic project"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        loadProject(at: url)
+    }
+
+    func openProject(at url: URL) {
+        guard confirmReplaceIfEdited() else { return }
+        loadProject(at: url)
+    }
+
+    private func sourceURL(for asset: PnPCardAsset) -> URL {
+        switch asset {
+        case .pdfPage(let url, _), .image(let url):
+            return url.standardizedFileURL
+        }
+    }
+
+    private func sourceIsUsable(_ asset: PnPCardAsset) -> Bool {
+        switch asset {
+        case .pdfPage(let url, let index):
+            guard let document = PDFDocument(url: url) else { return false }
+            return document.page(at: index) != nil
+        case .image(let url):
+            return NSImage(contentsOf: url) != nil
+        }
+    }
+
+    private func loadProject(at url: URL) {
+        do {
+            let project = try PnPProjectFile.read(from: url)
+            let original = project.restoredDeck(relativeTo: url)
+            let assets = original.cards.flatMap { [$0.front, $0.back] }.compactMap { $0 }
+            var missing: [URL] = []
+            var seen = Set<URL>()
+            for asset in assets {
+                let source = sourceURL(for: asset)
+                if seen.insert(source).inserted {
+                    if assets.contains(where: {
+                        sourceURL(for: $0) == source && !sourceIsUsable($0)
+                    }) {
+                        missing.append(source)
+                    }
+                }
+            }
+
+            var replacements: [URL: URL] = [:]
+            for source in missing {
+                // One replacement relinks every front/back reference to this source.
+                var located = false
+                while !located {
+                    let alert = NSAlert()
+                    alert.messageText = "Missing or unreadable artwork: \(source.lastPathComponent)"
+                    alert.informativeText = "Locate the original source (including all referenced PDF pages). Cancel keeps your current deck unchanged."
+                    alert.addButton(withTitle: "Locate File…")
+                    alert.addButton(withTitle: "Cancel Open")
+                    guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+                    let panel = NSOpenPanel()
+                    panel.allowedContentTypes = [.pdf, .image]
+                    panel.allowsMultipleSelection = false
+                    panel.canChooseDirectories = false
+                    panel.message = "Replacement for \(source.lastPathComponent)"
+                    guard panel.runModal() == .OK, let candidate = panel.url else { return }
+
+                    let matching = assets.filter { sourceURL(for: $0) == source }
+                    let valid = matching.allSatisfy { asset in
+                        switch asset {
+                        case .pdfPage(_, let index):
+                            guard let document = PDFDocument(url: candidate) else { return false }
+                            return document.page(at: index) != nil
+                        case .image:
+                            return NSImage(contentsOf: candidate) != nil
+                        }
+                    }
+                    if valid {
+                        replacements[source] = candidate.standardizedFileURL
+                        located = true
+                    } else {
+                        let notice = NSAlert()
+                        notice.messageText = "That file cannot replace this artwork."
+                        notice.informativeText = "Choose a readable file of the same kind containing every referenced PDF page."
+                        notice.runModal()
+                    }
+                }
+            }
+
+            deck = project.restoredDeck(relativeTo: url, replacements: replacements)
+            currentProjectURL = url
+            // Relinked documents stay marked edited until the user saves the new paths.
+            savedDeck = original
+            applyProjectSettings(project.settings)
+            savedSettings = project.settings
+            currentSheet = 0
+            selectedSlot = nil
+            window?.undoManager?.removeAllActions()
+            refresh()
+        } catch {
+            showAlert(message: "Could not open project", detail: error.localizedDescription)
         }
     }
 
@@ -1319,6 +1571,7 @@ final class MainWindowController: NSWindowController {
         statusLabel.stringValue = "\(fronts) fronts • \(backs) backs • \(pairs.count) paired positions"
         makeButton.isEnabled = fronts > 0 || backs > 0
         exactPreviewButton.isEnabled = makeButton.isEnabled
+        updateProjectEditedState()
     }
 
     /// This is the single export path for both exact preview and final output.
@@ -1589,6 +1842,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .map(URL.init(fileURLWithPath:))
             .filter { url in
                 url.pathExtension.lowercased() == "pdf"
+                    || url.pathExtension.lowercased() == "pnpomatic"
                     || UTType(filenameExtension: url.pathExtension)?.conforms(to: .image) == true
             }
 

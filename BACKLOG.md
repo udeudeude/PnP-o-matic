@@ -28,14 +28,18 @@ This is the **project backlog**, the working list of improvements, defects, vali
 - [x] Portrait and landscape Letter/A4 sheet support with orientation-aware long/short-edge duplex back placement.
 - [x] Core regression tests for fill behavior, 100% source preservation, landscape dimensions and mirrored back indices.
 
+- [x] Save/open `.pnpomatic` editable projects with relative paths, print settings, missing-source relinking, and unsaved-changes protection.
+- [x] Project file regression tests for round-trip, relocated folders, missing files, relinking and invalid formats.
+
 ## Verify before public release (highest priority)
 
 - [ ] Use actual 9-front/9-back printable registration sheets to verify **long-edge and short-edge** duplex at 100% with physical folding/flipping on a real printer.
 - [ ] Verify PDF TrimBox vs CropBox vs BleedBox with source files that have distinct page boxes, including clip and offset correctness.
 - [ ] Verify 3 mm bleed and gutters do not crop neighboring artwork in actual printed sheets; examine PDF trim paths and print margins.
-- [ ] Inspect the v0.3.2 UI at common 13-inch and 15-inch Mac window sizes; fix any clipped options or non-resizable preview.
+- [ ] Inspect the v0.4.0 UI at common 13-inch and 15-inch Mac window sizes; fix any clipped options or non-resizable preview.
 - [ ] Verify 1, 8, 9, 10, 17, 54-card jobs, front-only, back-only and duplex output.
 - [ ] Test drag across sheets, locked versus unlocked, copy-fill hover paths, Undo/Redo, interrupted imports and missing/unreadable files.
+- [ ] Verify project Open/Save/Save As shortcuts, unsaved-document prompts and missing-artwork relinking interactively on macOS.
 - [ ] Check image EXIF orientation and color management (JPEG, PNG, TIFF, HEIC) on real input files.
 - [ ] Verify app and installer on macOS 11 and macOS 15, Intel and Apple Silicon where available.
 - [ ] Publish an actual GitHub Release when physical and UI checks are satisfactory.
@@ -66,7 +70,7 @@ This is the **project backlog**, the working list of improvements, defects, vali
 - [x] Portrait/landscape Letter/A4 sheet toggle; duplex logic follows physical paper edge.
 - [ ] Optional 2x4 / 4x2 / adaptive max-fit imposition.
 - [ ] Multiplicity/Copies per card and repeat entire selected groups.
-- [ ] Save/open reusable \`.pnpomatic\` project files with relative source paths and missing-file relinking.
+- [x] Save/open reusable `.pnpomatic` project files with relative source paths and missing-file relinking.
 - [ ] Resolution warning for images that would print below user-selected DPI.
 - [ ] Color-management and PDF transparency checks for production-quality printing.
 

@@ -9,7 +9,7 @@ public enum PnPCardSide: String, Equatable {
     case back
 }
 
-public enum PnPDuplexFlip: String, CaseIterable {
+public enum PnPDuplexFlip: String, CaseIterable , Codable {
     case longEdge
     case shortEdge
 
@@ -35,7 +35,7 @@ public enum PnPCardAsset: Equatable {
     }
 }
 
-public enum PnPArtworkFit: String, CaseIterable {
+public enum PnPArtworkFit: String, CaseIterable , Codable {
     case fit
     case fill
 
@@ -44,7 +44,7 @@ public enum PnPArtworkFit: String, CaseIterable {
     }
 }
 
-public enum PnPArtworkBounds: String, CaseIterable {
+public enum PnPArtworkBounds: String, CaseIterable , Codable {
     case automatic
     case trim
     case crop
@@ -71,7 +71,7 @@ public enum PnPArtworkBounds: String, CaseIterable {
     }
 }
 
-public enum PnPBleed: String, CaseIterable {
+public enum PnPBleed: String, CaseIterable , Codable {
     case none
     case threeMillimeters
 
@@ -90,7 +90,7 @@ public enum PnPBleed: String, CaseIterable {
     }
 }
 
-public enum PnPCardSizePreset: String, CaseIterable {
+public enum PnPCardSizePreset: String, CaseIterable , Codable {
     case pdfPage
     case poker
     case bridge
@@ -129,12 +129,12 @@ public enum PnPCardSizePreset: String, CaseIterable {
     }
 }
 
-public enum PnPCutStyle: String, CaseIterable {
+public enum PnPCutStyle: String, CaseIterable , Codable {
     case edgeMarks
     case fullLines
 }
 
-public enum PnPPaperOrientation: String, CaseIterable {
+public enum PnPPaperOrientation: String, CaseIterable , Codable {
     case portrait
     case landscape
 
@@ -146,7 +146,7 @@ public enum PnPPaperOrientation: String, CaseIterable {
     }
 }
 
-public enum PnPPaperSize: String, CaseIterable {
+public enum PnPPaperSize: String, CaseIterable , Codable {
     case letter
     case a4
 

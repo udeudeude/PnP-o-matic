@@ -4,7 +4,7 @@ A native macOS print-and-play layout utility for building duplex-ready **3×3 ca
 
 ## Current development build
 
-**v0.3.2 (pre-release, pending real-printer validation)** adds Tarot and square presets, print-space/preview sharing, PDF box selection, bleed gutters, Fit/Fill, image DPI handling, mismatch warnings, linked hover highlights, Undo/Redo, a repeated common back, and first-half/second-half PDF importing.
+**v0.4.0 (pre-release, pending real-printer validation)** adds Tarot and square presets, print-space/preview sharing, PDF box selection, bleed gutters, Fit/Fill, image DPI handling, mismatch warnings, linked hover highlights, Undo/Redo, a repeated common back, and first-half/second-half PDF importing.
 
 See [BACKLOG.md](BACKLOG.md) for completed work, remaining features, print-test requirements, and known limitations.
 
@@ -18,6 +18,22 @@ PnP-o-matic shows **Fronts** and **Backs** side by side as miniature printed she
 - Back artwork itself is not mirrored. Only its sheet position changes.
 
 Use the sheet arrows to move through cards 10-18, 19-27, and so on.
+
+## Save and reopen editable projects
+
+Use **Save Project** (`Command-S`), **Save As…** (`Shift-Command-S`), and
+**Open Project…** (`Command-O`) to preserve card order, front/back relationships,
+all print settings, and the paired-rearrangement lock in a `.pnpomatic` file.
+
+Project files are readable JSON and reference your existing PDF/image source files;
+they **do not embed artwork**. Paths are stored relative to the project folder,
+so a project and its artwork can be moved together. If an image or PDF has moved
+or is unreadable (including a missing referenced PDF page), opening offers
+a replacement-file chooser. Cancelling preserves the current deck instead of
+silently dropping artwork. Save after relinking to update the stored paths.
+
+PnP-o-matic displays a modified-document indicator and prompts to save before
+closing or replacing an edited project. **PDF export is separate from Save Project.**
 
 ## Adding cards
 
