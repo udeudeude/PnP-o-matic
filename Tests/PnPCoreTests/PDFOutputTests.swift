@@ -141,6 +141,39 @@ final class PDFOutputTests: XCTestCase {
         XCTAssertLessThan(back2.0, 35)
     }
 
+    func testLandscapePDFHasLandscapeMediaBoxAndMirroredBackPositions() throws {
+        let sourceURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".pdf")
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".pdf")
+        defer {
+            try? FileManager.default.removeItem(at: sourceURL)
+            try? FileManager.default.removeItem(at: outputURL)
+        }
+        try makeSourcePDF(at: sourceURL, count: 9)
+        let assets: [PnPCardAsset?] = (0..<9).map {
+            .pdfPage(url: sourceURL, pageIndex: $0)
+        }
+        let result = try PnPImposer.impose(
+            fronts: assets,
+            backs: assets,
+            outputURL: outputURL,
+            paperSize: .letter,
+            orientation: .landscape,
+            cutStyle: .edgeMarks,
+            cardSizePreset: .poker,
+            duplexFlip: .longEdge
+        )
+        XCTAssertEqual(result.sheetCount, 1)
+        let pdf = try XCTUnwrap(PDFDocument(url: outputURL))
+        XCTAssertEqual(pdf.pageCount, 2)
+        for index in 0..<pdf.pageCount {
+            let page = try XCTUnwrap(pdf.page(at: index))
+            XCTAssertEqual(page.bounds(for: .mediaBox).width, 792, accuracy: 0.01)
+            XCTAssertEqual(page.bounds(for: .mediaBox).height, 612, accuracy: 0.01)
+        }
+    }
+
     func testFrontOnlyPrintsNoBlankBackSheets() throws {
         let sourceURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
