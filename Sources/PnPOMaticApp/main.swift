@@ -532,6 +532,7 @@ final class MainWindowController: NSWindowController {
     private let customUnitPopup = NSPopUpButton()
     private let customSizeControls = NSStackView()
     private let paperPopup = NSPopUpButton()
+    private let orientationPopup = NSPopUpButton()
     private let cutPopup = NSPopUpButton()
     private let duplexPopup = NSPopUpButton()
     private let fitPopup = NSPopUpButton()
@@ -541,6 +542,17 @@ final class MainWindowController: NSWindowController {
     private let undoButton = NSButton(title: "Undo", target: nil, action: nil)
     private let redoButton = NSButton(title: "Redo", target: nil, action: nil)
     private let warningsLabel = NSTextField(wrappingLabelWithString: "")
+    private let fillMissingButton = NSButton(
+        title: "Fill Missing Backs from Previous",
+        target: nil,
+        action: nil
+    )
+    private let exactPreviewButton = NSButton(
+        title: "Preview Exact PDF…",
+        target: nil,
+        action: nil
+    )
+    private var pdfPreviewController: NSWindowController?
 
     init() {
         frontPreview = PreviewGrid(
@@ -682,11 +694,36 @@ final class MainWindowController: NSWindowController {
 
         let previews = NSStackView()
         previews.orientation = .horizontal
-        previews.alignment = .top
-        previews.distribution = .fillEqually
-        previews.spacing = 24
+        previews.alignment = .centerY
+        previews.distribution = .fill
+        previews.spacing = 8
         previews.addArrangedSubview(frontPreview.container)
+
+        let pairLockControls = NSStackView()
+        pairLockControls.orientation = .vertical
+        pairLockControls.alignment = .centerX
+        pairLockControls.spacing = 8
+        pairLockControls.translatesAutoresizingMaskIntoConstraints = false
+
+        let lockTitle = NSTextField(wrappingLabelWithString: "Lock corresponding\nfronts / backs")
+        lockTitle.alignment = .center
+        lockTitle.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
+        pairLockControls.addArrangedSubview(lockTitle)
+        lockSwitch.state = .on
+        lockSwitch.toolTip = "On: dragging either side moves its matching card. Off: rearrange each side independently."
+        pairLockControls.addArrangedSubview(lockSwitch)
+        let lockDetail = NSTextField(wrappingLabelWithString: "Move together")
+        lockDetail.alignment = .center
+        lockDetail.textColor = .secondaryLabelColor
+        lockDetail.font = NSFont.systemFont(ofSize: 10)
+        pairLockControls.addArrangedSubview(lockDetail)
+
+        previews.addArrangedSubview(pairLockControls)
         previews.addArrangedSubview(backPreview.container)
+        NSLayoutConstraint.activate([
+            pairLockControls.widthAnchor.constraint(equalToConstant: 106),
+            frontPreview.container.widthAnchor.constraint(equalTo: backPreview.container.widthAnchor)
+        ])
         root.addArrangedSubview(previews)
 
         let nav = NSStackView()
@@ -754,6 +791,12 @@ final class MainWindowController: NSWindowController {
         paperPopup.action = #selector(previewOptionsChanged)
         options1.addArrangedSubview(paperPopup)
 
+        options1.addArrangedSubview(NSTextField(labelWithString: "Orientation:"))
+        orientationPopup.addItems(withTitles: PnPPaperOrientation.allCases.map(\.displayName))
+        orientationPopup.target = self
+        orientationPopup.action = #selector(previewOptionsChanged)
+        options1.addArrangedSubview(orientationPopup)
+
         options1.addArrangedSubview(NSTextField(labelWithString: "Cut lines:"))
         cutPopup.addItems(withTitles: ["Edge marks only", "Full-page cut lines"])
         cutPopup.target = self
@@ -768,19 +811,10 @@ final class MainWindowController: NSWindowController {
         options2.spacing = 10
 
         options2.addArrangedSubview(NSTextField(labelWithString: "Duplex flip:"))
-        duplexPopup.addItems(withTitles: [
-            "Long edge - mirror columns",
-            "Short edge - mirror rows",
-        ])
+        duplexPopup.addItems(withTitles: ["Long edge", "Short edge"])
         duplexPopup.target = self
         duplexPopup.action = #selector(duplexChanged)
         options2.addArrangedSubview(duplexPopup)
-
-        lockSwitch.state = .on
-        options2.addArrangedSubview(lockSwitch)
-        options2.addArrangedSubview(
-            NSTextField(labelWithString: "Lock corresponding fronts and backs while rearranging")
-        )
 
         root.addArrangedSubview(options2)
 
@@ -826,6 +860,11 @@ final class MainWindowController: NSWindowController {
         editRow.addArrangedSubview(warningsLabel)
         root.addArrangedSubview(editRow)
 
+        fillMissingButton.target = self
+        fillMissingButton.action = #selector(fillMissingBacks)
+        fillMissingButton.toolTip = "For each gap, copy the closest earlier nonempty card back forward. Leading gaps are left blank."
+        root.addArrangedSubview(fillMissingButton)
+
         let footer = NSStackView()
         footer.orientation = .horizontal
         footer.alignment = .centerY
@@ -840,7 +879,12 @@ final class MainWindowController: NSWindowController {
         makeButton.keyEquivalent = "\r"
         makeButton.isEnabled = false
 
+        exactPreviewButton.target = self
+        exactPreviewButton.action = #selector(previewExactPDF)
+        exactPreviewButton.isEnabled = false
+
         footer.addArrangedSubview(statusLabel)
+        footer.addArrangedSubview(exactPreviewButton)
         footer.addArrangedSubview(makeButton)
         root.addArrangedSubview(footer)
 
@@ -1020,6 +1064,14 @@ final class MainWindowController: NSWindowController {
         refresh()
     }
 
+    @objc private func fillMissingBacks() {
+        let before = deck
+        let changed = deck.fillMissingBacksFromPrevious()
+        guard !changed.isEmpty else { return }
+        registerEdit(before, title: "Fill \(changed.count) Missing Backs")
+        refresh()
+    }
+
     private func clear(side: PnPCardSide, at index: Int) {
         guard pairs.indices.contains(index) else { return }
         let before = deck
@@ -1074,6 +1126,10 @@ final class MainWindowController: NSWindowController {
 
     private var selectedDuplexFlip: PnPDuplexFlip {
         duplexPopup.indexOfSelectedItem == 0 ? .longEdge : .shortEdge
+    }
+
+    private var selectedOrientation: PnPPaperOrientation {
+        PnPPaperOrientation.allCases[orientationPopup.indexOfSelectedItem]
     }
 
     private var selectedBleed: PnPBleed {
@@ -1182,7 +1238,9 @@ final class MainWindowController: NSWindowController {
                 artworkBounds: selectedArtworkBounds
             )
 
-            let backLogicalSlot = PnPImposer.mirroredSlot(visualSlot, flip: flip)
+            let backLogicalSlot = PnPImposer.mirroredSlot(
+                visualSlot, flip: flip, orientation: selectedOrientation
+            )
             let backIndex = start + backLogicalSlot
             let backAsset = pairs.indices.contains(backIndex) ? pairs[backIndex].back : nil
             backPreview.slot(at: visualSlot).configure(
@@ -1196,10 +1254,10 @@ final class MainWindowController: NSWindowController {
         }
 
         let arrangement: String
-        switch flip {
-        case .longEdge:
+        let mirrorsColumns = (flip == .longEdge) == (selectedOrientation == .portrait)
+        if mirrorsColumns {
             arrangement = "Back sheet: 3–2–1 / 6–5–4 / 9–8–7"
-        case .shortEdge:
+        } else {
             arrangement = "Back sheet: 7–8–9 / 4–5–6 / 1–2–3"
         }
         backPreview.detailLabel.stringValue = arrangement
@@ -1209,7 +1267,7 @@ final class MainWindowController: NSWindowController {
         let previewCardSize = currentPreviewCardSize()
         let sheetLayout = PnPSheetLayout(
             cardSize: previewCardSize,
-            sheetSize: paper.size,
+            sheetSize: paper.size(for: selectedOrientation),
             cutStyle: cutStyle,
             bleed: selectedBleed.points
         )
@@ -1238,6 +1296,18 @@ final class MainWindowController: NSWindowController {
             }
         }
         warningsLabel.stringValue = notices.joined(separator: "   •   ")
+        // Only offer fill when at least one gap has an earlier actual back.
+        var previousBack: PnPCardAsset?
+        var fillable = false
+        for card in deck.cards {
+            if let back = card.back {
+                previousBack = back
+            } else if card.front != nil && previousBack != nil {
+                fillable = true
+            }
+        }
+        fillMissingButton.isEnabled = fillable
+        fillMissingButton.isHidden = !fillable
         undoButton.isEnabled = window?.undoManager?.canUndo ?? false
         redoButton.isEnabled = window?.undoManager?.canRedo ?? false
         previousButton.isEnabled = currentSheet > 0
@@ -1247,6 +1317,7 @@ final class MainWindowController: NSWindowController {
         let backs = pairs.compactMap(\.back).count
         statusLabel.stringValue = "\(fronts) fronts • \(backs) backs • \(pairs.count) paired positions"
         makeButton.isEnabled = fronts > 0 || backs > 0
+        exactPreviewButton.isEnabled = makeButton.isEnabled
     }
 
     @objc private func makePDF() {
