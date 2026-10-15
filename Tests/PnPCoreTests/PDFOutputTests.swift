@@ -15,8 +15,9 @@ final class PDFOutputTests: XCTestCase {
 
         for number in 0..<count {
             context.beginPDFPage(nil)
-            context.setFillColor(CGColor(red: number.isMultiple(of: 2) ? 1 : 0,
-                                         green: number.isMultiple(of: 2) ? 0 : 1,
+            let fraction = CGFloat(number) / CGFloat(max(1, count - 1))
+            context.setFillColor(CGColor(red: fraction,
+                                         green: 1 - fraction,
                                          blue: 0,
                                          alpha: 1))
             context.fill(media)
@@ -144,33 +145,63 @@ final class PDFOutputTests: XCTestCase {
     func testLandscapePDFHasLandscapeMediaBoxAndMirroredBackPositions() throws {
         let sourceURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + ".pdf")
-        let outputURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".pdf")
-        defer {
-            try? FileManager.default.removeItem(at: sourceURL)
-            try? FileManager.default.removeItem(at: outputURL)
-        }
+        defer { try? FileManager.default.removeItem(at: sourceURL) }
         try makeSourcePDF(at: sourceURL, count: 9)
         let assets: [PnPCardAsset?] = (0..<9).map {
             .pdfPage(url: sourceURL, pageIndex: $0)
         }
-        let result = try PnPImposer.impose(
-            fronts: assets,
-            backs: assets,
-            outputURL: outputURL,
-            paperSize: .letter,
-            orientation: .landscape,
-            cutStyle: .edgeMarks,
-            cardSizePreset: .poker,
-            duplexFlip: .longEdge
-        )
-        XCTAssertEqual(result.sheetCount, 1)
-        let pdf = try XCTUnwrap(PDFDocument(url: outputURL))
-        XCTAssertEqual(pdf.pageCount, 2)
-        for index in 0..<pdf.pageCount {
-            let page = try XCTUnwrap(pdf.page(at: index))
-            XCTAssertEqual(page.bounds(for: .mediaBox).width, 792, accuracy: 0.01)
-            XCTAssertEqual(page.bounds(for: .mediaBox).height, 612, accuracy: 0.01)
+
+        for flip in PnPDuplexFlip.allCases {
+            let outputURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString + ".pdf")
+            defer { try? FileManager.default.removeItem(at: outputURL) }
+
+            let result = try PnPImposer.impose(
+                fronts: assets,
+                backs: assets,
+                outputURL: outputURL,
+                paperSize: .letter,
+                orientation: .landscape,
+                cutStyle: .edgeMarks,
+                cardSizePreset: .poker,
+                duplexFlip: flip
+            )
+            XCTAssertEqual(result.sheetCount, 1)
+            let pdf = try XCTUnwrap(PDFDocument(url: outputURL))
+            XCTAssertEqual(pdf.pageCount, 2)
+            for index in 0..<pdf.pageCount {
+                let page = try XCTUnwrap(pdf.page(at: index))
+                XCTAssertEqual(page.bounds(for: .mediaBox).width, 792, accuracy: 0.01)
+                XCTAssertEqual(page.bounds(for: .mediaBox).height, 612, accuracy: 0.01)
+            }
+
+            // Render actual PDF pixels to catch a mismatch between mirroredSlot
+            // calculations and the artwork placed on the output back page.
+            let raw = try XCTUnwrap(CGPDFDocument(outputURL as CFURL))
+            let frontPage = try XCTUnwrap(raw.page(at: 1))
+            let backPage = try XCTUnwrap(raw.page(at: 2))
+            let sheet = PnPSheetLayout(
+                cardSize: CGSize(width: 180, height: 252),
+                sheetSize: PnPPaperSize.letter.size(for: .landscape),
+                cutStyle: .edgeMarks
+            )
+            let firstSlot = sheet.cardFrame(0)
+            let center = CGPoint(x: firstSlot.midX, y: firstSlot.midY)
+            let frontColor = try samplePixel(from: frontPage, at: center)
+            let backColor = try samplePixel(from: backPage, at: center)
+            XCTAssertLessThan(frontColor.0, 35)
+            XCTAssertGreaterThan(frontColor.1, 220)
+
+            if flip == .longEdge {
+                // Landscape long-edge flips rows: top-left back is card 7.
+                XCTAssertGreaterThan(backColor.0, 150)
+                XCTAssertLessThan(backColor.1, 115)
+            } else {
+                // Landscape short-edge flips columns: top-left back is card 3.
+                XCTAssertGreaterThan(backColor.0, 30)
+                XCTAssertLessThan(backColor.0, 105)
+                XCTAssertGreaterThan(backColor.1, 150)
+            }
         }
     }
 
