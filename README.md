@@ -4,7 +4,7 @@ A native macOS print-and-play layout utility for building duplex-ready **3×3 ca
 
 ## Current development build
 
-**v0.3.1 (pre-release, pending real-printer validation)** adds Tarot and square presets, print-space/preview sharing, PDF box selection, bleed gutters, Fit/Fill, image DPI handling, mismatch warnings, linked hover highlights, Undo/Redo, a repeated common back, and first-half/second-half PDF importing.
+**v0.3.2 (pre-release, pending real-printer validation)** adds Tarot and square presets, print-space/preview sharing, PDF box selection, bleed gutters, Fit/Fill, image DPI handling, mismatch warnings, linked hover highlights, Undo/Redo, a repeated common back, and first-half/second-half PDF importing.
 
 See [BACKLOG.md](BACKLOG.md) for completed work, remaining features, print-test requirements, and known limitations.
 
@@ -36,12 +36,22 @@ Supported images are the image formats macOS can read through ImageIO.
 
 Drag an occupied slot to another numbered slot to rearrange it.
 
-The **Lock corresponding fronts and backs while rearranging** switch is on by default:
+The **Lock corresponding fronts and backs** switch is located **between the two sheet previews** and is on by default:
 
 - **On:** moving either side moves the whole front/back pair.
 - **Off:** fronts and backs can be reordered independently.
 
+For spreadsheet-style filling, **hold Option while dragging an occupied card through empty slots** on the same side. It copies the source artwork into every slot visited, without overwriting occupied slots. Undo restores all of those changes in one step. Normal dragging still rearranges.
+
+When some backs are missing after at least one back has been supplied, click **Fill Missing Backs from Previous**. Each missing group inherits the nearest preceding back. Missing backs before the first supplied back remain empty, rather than receiving an arbitrary design.
+
 Click a slot to select it (blue outline), then press **Delete** or **Backspace** to clear just that front or back. You can also right-click and choose **Clear This Slot**. Clearing one side keeps its paired other side, regardless of the reordering lock, and supports Undo.
+
+## Exact PDF preview and paper orientation
+
+Click **Preview Exact PDF…** to open the **actual output PDF** inside PnP-o-matic, with every sheet, exact trim lines, artwork, and duplex back placement. You can zoom and navigate pages; **Open in Preview** takes that PDF to macOS Preview. The **Make Duplex 9-Up PDF** command uses precisely the same generation path.
+
+**Paper** selects Letter or A4; **Orientation** beside it selects Portrait or Landscape. Both page dimensions and duplex back positioning are updated. Long-edge printing mirrors columns on portrait paper, but mirrors rows on landscape paper because the physical edges swap. Print at **100% / Actual Size**, without automatic scaling.
 
 ## Card sizes
 

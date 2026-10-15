@@ -2,7 +2,7 @@
 
 This is the **project backlog**, the working list of improvements, defects, validation, and ideas. Checkboxes describe implementation state, not a claim of real-printer verification. Priority is relative to the next public release.
 
-## Implemented in v0.3.1 source (requires physical print validation)
+## Implemented in v0.3.2 source (requires physical print validation)
 
 - [x] Shared PDF-point sheet layout for preview and export, including the same trim-line segments.
 - [x] Artwork bounds selector: Automatic / TrimBox / CropBox / BleedBox / MediaBox.
@@ -21,21 +21,28 @@ This is the **project backlog**, the working list of improvements, defects, vali
 - [x] Letter/A4 sheet output; margin-only or full-length cut lines; Preview output; user-level Mac installer.
 - [x] Vertically scrollable editor so additional options remain reachable on smaller laptop windows.
 - [x] Keep temporary export PDFs accessible after closing the editor; purge PDFs older than 24 hours on a subsequent launch.
+- [x] Move paired-rearrangement lock between the front and back sheet previews.
+- [x] Exact, in-app PDFKit preview of generated PDF with every output sheet and an Open in Preview action.
+- [x] Fill missing backs from the most recent preceding back, independently per group, preserving leading blanks.
+- [x] Option-drag copy-fill artwork through multiple empty card slots, without overwriting occupied artwork; one-step Undo.
+- [x] Portrait and landscape Letter/A4 sheet support with orientation-aware long/short-edge duplex back placement.
+- [x] Core regression tests for fill behavior, 100% source preservation, landscape dimensions and mirrored back indices.
 
 ## Verify before public release (highest priority)
 
 - [ ] Use actual 9-front/9-back printable registration sheets to verify **long-edge and short-edge** duplex at 100% with physical folding/flipping on a real printer.
 - [ ] Verify PDF TrimBox vs CropBox vs BleedBox with source files that have distinct page boxes, including clip and offset correctness.
 - [ ] Verify 3 mm bleed and gutters do not crop neighboring artwork in actual printed sheets; examine PDF trim paths and print margins.
-- [ ] Inspect the v0.3.0 UI at common 13-inch and 15-inch Mac window sizes; fix any clipped options or non-resizable preview.
+- [ ] Inspect the v0.3.2 UI at common 13-inch and 15-inch Mac window sizes; fix any clipped options or non-resizable preview.
 - [ ] Verify 1, 8, 9, 10, 17, 54-card jobs, front-only, back-only and duplex output.
-- [ ] Test drag across sheets, locked versus unlocked, Undo/Redo, interrupted imports and missing/unreadable files.
+- [ ] Test drag across sheets, locked versus unlocked, copy-fill hover paths, Undo/Redo, interrupted imports and missing/unreadable files.
 - [ ] Check image EXIF orientation and color management (JPEG, PNG, TIFF, HEIC) on real input files.
 - [ ] Verify app and installer on macOS 11 and macOS 15, Intel and Apple Silicon where available.
 - [ ] Publish an actual GitHub Release when physical and UI checks are satisfactory.
 
 ## Next practical UX work
 
+- [ ] Drag-fill across sheet boundaries with auto-navigation/scrolling.
 - [ ] Whole-deck Cards view with drag reorder, bulk select and search (in addition to 9-up Sheets view).
 - [ ] Better drag indicators distinguishing **insert**, **swap** and **replace**; expose a deliberate choice for occupied slots.
 - [x] Click a front or back slot and press Delete/Backspace to clear that slot, with visual selection and Undo support.
@@ -56,7 +63,8 @@ This is the **project backlog**, the working list of improvements, defects, vali
 - [ ] Configurable cut-mark thickness, ink color, length and setback.
 - [ ] Manual print registration calibration: X/Y offset for backs with printable calibration sheet.
 - [ ] Rotation: individual card 90/180 degrees, orientation auto-detection and fit.
-- [ ] Portrait/landscape page and optional 2x4 / 4x2 / adaptive max-fit imposition.
+- [x] Portrait/landscape Letter/A4 sheet toggle; duplex logic follows physical paper edge.
+- [ ] Optional 2x4 / 4x2 / adaptive max-fit imposition.
 - [ ] Multiplicity/Copies per card and repeat entire selected groups.
 - [ ] Save/open reusable \`.pnpomatic\` project files with relative source paths and missing-file relinking.
 - [ ] Resolution warning for images that would print below user-selected DPI.

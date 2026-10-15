@@ -59,12 +59,15 @@ h1{font-size:34px}.box{border:1px solid #9996;border-radius:12px;padding:18px 22
 <li>For front-back-front-back PDFs, choose <strong>Import Alternating Front / Back PDF…</strong>.</li>
 <li>For PDFs divided into two equal halves, choose <strong>Import First Half / Second Half…</strong>.</li>
 <li>For a single shared back, import fronts then choose <strong>Repeat One Back…</strong>.</li>
-<li>Drag numbered slots to rearrange cards. Leave the front/back lock on to move pairs together, or switch it off to rearrange one side independently.</li>
+<li>Drag numbered slots to rearrange cards. The front/back lock is between the two preview sheets: on moves card pairs together, off moves sides independently.</li>
+<li>Option-drag an occupied card over empty slots to copy-fill those slots. Existing artwork is never replaced by this gesture; one Undo reverses the fill.</li>
+<li>Click <strong>Fill Missing Backs from Previous</strong> to copy the nearest preceding back into each missing-back run. Gaps before the first back remain empty.</li>
 <li>Click a card slot to select it and press <strong>Delete</strong> or <strong>Backspace</strong> to clear just that side; you can also right-click and choose <strong>Clear This Slot</strong>. Use Undo to restore a cleared slot.</li>
 <li>Choose Poker, Bridge, Euro, Tarot, 2.5-inch Square, source-page, or custom finished card size.</li>
 <li>Choose Fit or Fill artwork, PDF page box and optional 3 mm bleed.</li>
-<li>Choose US Letter or A4 and edge-only or full-page cut lines.</li>
-<li>Choose long-edge duplex for normal portrait book-style flipping. The back grid mirrors columns automatically.</li>
+<li>Choose US Letter or A4, then <strong>Orientation: Portrait or Landscape</strong>, and edge-only or full-page cut lines.</li>
+<li>Click <strong>Preview Exact PDF…</strong> to inspect the actual generated sheets inside PnP-o-matic, or click <strong>Open in Preview</strong>.</li>
+<li>Choose the printer's duplex flip edge. Long-edge mirrors columns in portrait, rows in landscape; short-edge is the opposite.</li>
 <li>Click <strong>Make Duplex 9-Up PDF</strong>. The result opens in Preview.</li>
 </ol>
 <p>Tarot cards cannot fit nine-up at 100% on Letter or A4; the scale warning shows the reduction. For correctly sized cards, print at Actual Size / 100% without automatic fit-to-page.</p>
