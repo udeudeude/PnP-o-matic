@@ -144,6 +144,71 @@ final class DeckAndSheetTests: XCTestCase {
         XCTAssertEqual(deck.cards[0].back, back)
     }
 
+    func testPreviousBackFillChangesOnlyGapsAfterAnExistingBack() {
+        let cards: [PnPCardPair] = [
+            PnPCardPair(front: asset(0), back: nil),
+            PnPCardPair(front: asset(1), back: asset(101)),
+            PnPCardPair(front: asset(2), back: nil),
+            PnPCardPair(front: asset(3), back: nil),
+            PnPCardPair(front: asset(4), back: asset(104)),
+            PnPCardPair(front: asset(5), back: nil)
+        ]
+        var deck = PnPDeck(cards: cards)
+        let original = deck
+        XCTAssertEqual(deck.fillMissingBacksFromPrevious(), [3, 4, 6])
+        XCTAssertNil(deck.cards[0].back) // no earlier back for leading gap
+        XCTAssertEqual(deck.cards[2].back, asset(101))
+        XCTAssertEqual(deck.cards[3].back, asset(101))
+        XCTAssertEqual(deck.cards[4].back, asset(104))
+        XCTAssertEqual(deck.cards[5].back, asset(104))
+
+        // Undo is a single snapshot restoration, including all the gaps.
+        deck = original
+        XCTAssertNil(deck.cards[2].back)
+        XCTAssertNil(deck.cards[5].back)
+    }
+
+    func testCopyFillCoversVisitedCellsAndProtectsExistingArtwork() {
+        var deck = PnPDeck(cards: [
+            PnPCardPair(front: asset(0), back: asset(10)),
+            PnPCardPair(front: asset(1)),
+            PnPCardPair(front: asset(2), back: asset(20)),
+            PnPCardPair(front: asset(3)),
+            PnPCardPair(front: asset(4))
+        ])
+        let before = deck
+        XCTAssertEqual(deck.copyFill(side: .back, from: 0, to: [0, 1, 2, 4]), 2)
+        XCTAssertEqual(deck.cards[1].back, asset(10))
+        XCTAssertEqual(deck.cards[2].back, asset(20))
+        XCTAssertEqual(deck.cards[3].back, nil) // not visited
+        XCTAssertEqual(deck.cards[4].back, asset(10))
+        XCTAssertEqual(deck.cards[1].front, asset(1))
+        deck = before
+        XCTAssertNil(deck.cards[1].back)
+    }
+
+    func testLandscapePhysicalDuplexMirrorsRowsForLongEdge() {
+        XCTAssertEqual(
+            (0..<9).map {
+                PnPImposer.mirroredSlot($0, flip: .longEdge, orientation: .landscape)
+            }, [6, 7, 8, 3, 4, 5, 0, 1, 2]
+        )
+        XCTAssertEqual(
+            (0..<9).map {
+                PnPImposer.mirroredSlot($0, flip: .shortEdge, orientation: .landscape)
+            }, [2, 1, 0, 5, 4, 3, 8, 7, 6]
+        )
+    }
+
+    func testLandscapePaperDimensionsAreSwapped() {
+        for paper in PnPPaperSize.allCases {
+            let portrait = paper.size(for: .portrait)
+            let landscape = paper.size(for: .landscape)
+            XCTAssertEqual(portrait.width, landscape.height, accuracy: 0.001)
+            XCTAssertEqual(portrait.height, landscape.width, accuracy: 0.001)
+        }
+    }
+
     func testSnapshotRestoreForUndo() {
         var deck = PnPDeck(cards: [PnPCardPair(front: asset(0), back: asset(1))])
         let before = deck
