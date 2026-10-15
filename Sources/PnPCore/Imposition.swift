@@ -134,6 +134,18 @@ public enum PnPCutStyle: String, CaseIterable {
     case fullLines
 }
 
+public enum PnPPaperOrientation: String, CaseIterable {
+    case portrait
+    case landscape
+
+    public var displayName: String {
+        switch self {
+        case .portrait: return "Portrait"
+        case .landscape: return "Landscape"
+        }
+    }
+}
+
 public enum PnPPaperSize: String, CaseIterable {
     case letter
     case a4
@@ -146,12 +158,20 @@ public enum PnPPaperSize: String, CaseIterable {
     }
 
     public var size: CGSize {
+        size(for: .portrait)
+    }
+
+    public func size(for orientation: PnPPaperOrientation) -> CGSize {
+        let portrait: CGSize
         switch self {
         case .letter:
-            return CGSize(width: 612, height: 792)
+            portrait = CGSize(width: 612, height: 792)
         case .a4:
-            return CGSize(width: 595.2756, height: 841.8898)
+            portrait = CGSize(width: 595.2756, height: 841.8898)
         }
+        return orientation == .portrait
+            ? portrait
+            : CGSize(width: portrait.height, height: portrait.width)
     }
 }
 
@@ -211,17 +231,22 @@ public enum PnPError: LocalizedError {
 }
 
 public enum PnPImposer {
-    public static func mirroredSlot(_ slot: Int, flip: PnPDuplexFlip) -> Int {
+    public static func mirroredSlot(
+        _ slot: Int,
+        flip: PnPDuplexFlip,
+        orientation: PnPPaperOrientation = .portrait
+    ) -> Int {
         precondition((0..<9).contains(slot))
         let row = slot / 3
         let column = slot % 3
 
-        switch flip {
-        case .longEdge:
+        // "Long" and "short" refer to the actual physical paper edges.
+        // Those axes swap when the sheet is landscape.
+        let mirrorColumns = (flip == .longEdge) == (orientation == .portrait)
+        if mirrorColumns {
             return row * 3 + (2 - column)
-        case .shortEdge:
-            return (2 - row) * 3 + column
         }
+        return (2 - row) * 3 + column
     }
 
     public static func assets(from url: URL) -> [PnPCardAsset] {
@@ -277,6 +302,7 @@ public enum PnPImposer {
         inputURLs: [URL],
         outputURL: URL,
         paperSize: PnPPaperSize,
+        orientation: PnPPaperOrientation = .portrait,
         cutStyle: PnPCutStyle,
         cardSizePreset: PnPCardSizePreset = .pdfPage,
         customCardSize: CGSize? = nil,
@@ -294,6 +320,7 @@ public enum PnPImposer {
             backs: [],
             outputURL: outputURL,
             paperSize: paperSize,
+            orientation: orientation,
             cutStyle: cutStyle,
             cardSizePreset: cardSizePreset,
             customCardSize: customCardSize,
@@ -309,6 +336,7 @@ public enum PnPImposer {
         backs: [PnPCardAsset?],
         outputURL: URL,
         paperSize: PnPPaperSize,
+        orientation: PnPPaperOrientation = .portrait,
         cutStyle: PnPCutStyle,
         cardSizePreset: PnPCardSizePreset = .poker,
         customCardSize: CGSize? = nil,
@@ -348,7 +376,7 @@ public enum PnPImposer {
             requestedCardSize = fixedSize
         }
 
-        let sheetSize = paperSize.size
+        let sheetSize = paperSize.size(for: orientation)
         let layout = PnPSheetLayout(
             cardSize: requestedCardSize,
             sheetSize: sheetSize,
@@ -401,7 +429,9 @@ public enum PnPImposer {
                           let asset = backs[cardIndex] else {
                         continue
                     }
-                    let visualSlot = mirroredSlot(logicalSlot, flip: duplexFlip)
+                    let visualSlot = mirroredSlot(
+                        logicalSlot, flip: duplexFlip, orientation: orientation
+                    )
                     draw(
                         asset: asset,
                         in: layout.cardFrame(visualSlot),
