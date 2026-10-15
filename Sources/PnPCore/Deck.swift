@@ -68,6 +68,50 @@ public struct PnPDeck: Equatable {
         }
     }
 
+    /// Fill each missing back using the most recent preceding non-empty back.
+    /// The first back on a run starts a new source; leading missing backs remain empty.
+    /// Returns one-based card numbers actually filled.
+    @discardableResult
+    public mutating func fillMissingBacksFromPrevious() -> [Int] {
+        var lastBack: PnPCardAsset?
+        var changed: [Int] = []
+        for index in cards.indices {
+            if let back = cards[index].back {
+                lastBack = back
+            } else if cards[index].front != nil, let lastBack {
+                cards[index].back = lastBack
+                changed.append(index + 1)
+            }
+        }
+        return changed
+    }
+
+    /// Copy a slot's artwork to all indicated positions on that same side.
+    /// Existing artwork is protected by default, and the source is never changed.
+    /// Returns number of destination slots filled.
+    @discardableResult
+    public mutating func copyFill(
+        side: PnPCardSide,
+        from sourceIndex: Int,
+        to destinations: Set<Int>,
+        replaceExisting: Bool = false
+    ) -> Int {
+        guard cards.indices.contains(sourceIndex) else { return 0 }
+        guard let source = side == .front
+            ? cards[sourceIndex].front : cards[sourceIndex].back else { return 0 }
+        let valid = destinations.filter { $0 >= 0 && $0 != sourceIndex }
+        guard let maximum = valid.max() else { return 0 }
+        ensureCount(maximum + 1)
+        var filled = 0
+        for index in valid.sorted() {
+            let existing = side == .front ? cards[index].front : cards[index].back
+            if !replaceExisting && existing != nil { continue }
+            put(source, side: side, at: index)
+            filled += 1
+        }
+        return filled
+    }
+
     public mutating func move(side: PnPCardSide, from: Int, to: Int, paired: Bool) {
         guard cards.indices.contains(from), to >= 0, from != to else { return }
         ensureCount(to + 1)
