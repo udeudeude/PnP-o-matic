@@ -80,7 +80,7 @@ final class CardSlotView: NSView, NSDraggingSource {
         layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.5).cgColor
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
-        registerForDraggedTypes([.pnpCardSlot, .fileURL])
+        registerForDraggedTypes([.pnpCardSlot, .pnpCardFill, .fileURL])
 
         imageView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(imageView)
