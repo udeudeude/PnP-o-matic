@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 extension NSPasteboard.PasteboardType {
     static let pnpCardSlot = NSPasteboard.PasteboardType("com.udeudeude.pnpomatic.card-slot")
+    static let pnpCardFill = NSPasteboard.PasteboardType("com.udeudeude.pnpomatic.card-fill")
 }
 
 private func thumbnail(
@@ -55,6 +56,10 @@ final class CardSlotView: NSView, NSDraggingSource {
     var onClear: ((PnPCardSide, Int) -> Void)?
     var onHover: ((Int?) -> Void)?
     var onSelect: ((PnPCardSide, Int) -> Void)?
+    var onFillBegin: ((PnPCardSide, Int) -> Void)?
+    var onFillVisit: ((PnPCardSide, Int) -> Void)?
+    var onFillComplete: ((PnPCardSide, Int) -> Void)?
+    var onFillEnd: (() -> Void)?
 
     private let imageView = ArtworkPreviewView()
     private let numberLabel = NSTextField(labelWithString: "")
@@ -64,6 +69,7 @@ final class CardSlotView: NSView, NSDraggingSource {
     private var linkedHighlight = false
     private var dropHighlight = false
     private var isSelected = false
+    private var isFillDragging = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -199,6 +205,7 @@ final class CardSlotView: NSView, NSDraggingSource {
 
     override func mouseDown(with event: NSEvent) {
         dragStarted = false
+        isFillDragging = false
         selectForKeyboardEditing()
     }
 
@@ -221,11 +228,13 @@ final class CardSlotView: NSView, NSDraggingSource {
     override func mouseDragged(with event: NSEvent) {
         guard asset != nil, !dragStarted else { return }
         dragStarted = true
+        isFillDragging = event.modifierFlags.contains(.option)
+        if isFillDragging { onFillBegin?(side, globalIndex) }
 
         let pasteboardItem = NSPasteboardItem()
         pasteboardItem.setString(
             "\(side.rawValue):\(globalIndex)",
-            forType: .pnpCardSlot
+            forType: isFillDragging ? .pnpCardFill : .pnpCardSlot
         )
 
         let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
@@ -243,15 +252,42 @@ final class CardSlotView: NSView, NSDraggingSource {
         _ session: NSDraggingSession,
         sourceOperationMaskFor context: NSDraggingContext
     ) -> NSDragOperation {
-        .move
+        isFillDragging ? .copy : .move
+    }
+
+    func draggingSession(
+        _ session: NSDraggingSession,
+        endedAt screenPoint: NSPoint,
+        operation: NSDragOperation
+    ) {
+        if isFillDragging { onFillEnd?() }
+        isFillDragging = false
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        let fillPayload = sender.draggingPasteboard.string(forType: .pnpCardFill)
         let internalDrag = sender.draggingPasteboard.string(forType: .pnpCardSlot) != nil
         let externalDrag = !externalURLs(from: sender).isEmpty
-        dropHighlight = internalDrag || externalDrag
+        dropHighlight = fillPayload != nil || internalDrag || externalDrag
         updateBorder()
-        return internalDrag ? .move : externalDrag ? .copy : []
+        if let fillPayload { recordFillVisit(fillPayload) }
+        return fillPayload != nil || externalDrag ? .copy : internalDrag ? .move : []
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if let payload = sender.draggingPasteboard.string(forType: .pnpCardFill) {
+            recordFillVisit(payload)
+            return .copy
+        }
+        return sender.draggingPasteboard.string(forType: .pnpCardSlot) == nil ? .copy : .move
+    }
+
+    private func recordFillVisit(_ payload: String) {
+        let pieces = payload.split(separator: ":")
+        guard pieces.count == 2,
+              let draggingSide = PnPCardSide(rawValue: String(pieces[0])),
+              draggingSide == side else { return }
+        onFillVisit?(side, globalIndex)
     }
 
     override func draggingExited(_ sender: NSDraggingInfo?) {
@@ -262,6 +298,15 @@ final class CardSlotView: NSView, NSDraggingSource {
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         dropHighlight = false
         updateBorder()
+        if let payload = sender.draggingPasteboard.string(forType: .pnpCardFill) {
+            let parts = payload.split(separator: ":")
+            guard parts.count == 2,
+                  PnPCardSide(rawValue: String(parts[0])) == side,
+                  Int(parts[1]) != nil else { return false }
+            onFillComplete?(side, globalIndex)
+            return true
+        }
+
         if let payload = sender.draggingPasteboard.string(forType: .pnpCardSlot) {
             let pieces = payload.split(separator: ":")
             guard pieces.count == 2,
@@ -468,6 +513,7 @@ final class MainWindowController: NSWindowController {
     }
     private var highlightedPairIndex: Int?
     private var selectedSlot: (side: PnPCardSide, index: Int)?
+    private var fillDrag: (side: PnPCardSide, source: Int, visited: Set<Int>)?
     private var temporaryOutputs: [URL] = []
     private var currentSheet = 0
 
@@ -658,7 +704,7 @@ final class MainWindowController: NSWindowController {
         nav.addArrangedSubview(nextButton)
 
         let navHelp = NSTextField(
-            labelWithString: "Drop PDF/images on slots; click a slot and press Delete to clear it."
+            labelWithString: "Drop PDF/images; Option-drag an occupied card through blanks to copy-fill; Delete clears selected."
         )
         navHelp.textColor = .secondaryLabelColor
         navHelp.font = NSFont.systemFont(ofSize: 11)
@@ -818,6 +864,21 @@ final class MainWindowController: NSWindowController {
                 slot.onMove = { [weak self] side, source, destination in
                     self?.move(side: side, from: source, to: destination)
                 }
+                slot.onFillBegin = { [weak self] side, index in
+                    self?.fillDrag = (side: side, source: index, visited: [])
+                }
+                slot.onFillVisit = { [weak self] side, index in
+                    guard let self, var drag = self.fillDrag,
+                          drag.side == side else { return }
+                    drag.visited.insert(index)
+                    self.fillDrag = drag
+                }
+                slot.onFillComplete = { [weak self] side, index in
+                    self?.completeFill(side: side, endingAt: index)
+                }
+                slot.onFillEnd = { [weak self] in
+                    self?.fillDrag = nil
+                }
                 slot.onClear = { [weak self] side, index in
                     self?.clear(side: side, at: index)
                 }
@@ -939,6 +1000,23 @@ final class MainWindowController: NSWindowController {
         let before = deck
         deck.move(side: side, from: source, to: destination, paired: lockSwitch.state == .on)
         registerEdit(before, title: "Rearrange Cards")
+        refresh()
+    }
+
+    private func completeFill(side: PnPCardSide, endingAt index: Int) {
+        guard let drag = fillDrag, drag.side == side else { return }
+        var destinations = drag.visited
+        destinations.insert(index)
+        let before = deck
+        let count = deck.copyFill(
+            side: side,
+            from: drag.source,
+            to: destinations,
+            replaceExisting: false
+        )
+        fillDrag = nil
+        guard count > 0 else { return }
+        registerEdit(before, title: "Fill \(count) Card Slots")
         refresh()
     }
 
