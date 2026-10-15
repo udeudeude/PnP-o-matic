@@ -54,6 +54,7 @@ final class CardSlotView: NSView, NSDraggingSource {
     var onMove: ((PnPCardSide, Int, Int) -> Void)?
     var onClear: ((PnPCardSide, Int) -> Void)?
     var onHover: ((Int?) -> Void)?
+    var onSelect: ((PnPCardSide, Int) -> Void)?
 
     private let imageView = ArtworkPreviewView()
     private let numberLabel = NSTextField(labelWithString: "")
@@ -62,6 +63,7 @@ final class CardSlotView: NSView, NSDraggingSource {
     private var dragStarted = false
     private var linkedHighlight = false
     private var dropHighlight = false
+    private var isSelected = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -146,9 +148,15 @@ final class CardSlotView: NSView, NSDraggingSource {
         updateBorder()
     }
 
+    func setSelected(_ value: Bool) {
+        isSelected = value
+        updateBorder()
+    }
+
     private func updateBorder() {
-        layer?.borderWidth = linkedHighlight || dropHighlight ? 2 : 0.5
+        layer?.borderWidth = isSelected || linkedHighlight || dropHighlight ? 2 : 0.5
         layer?.borderColor = (dropHighlight ? NSColor.systemGreen :
+            isSelected ? NSColor.systemBlue :
             linkedHighlight ? NSColor.controlAccentColor :
             NSColor.separatorColor.withAlphaComponent(0.5)).cgColor
     }
@@ -176,9 +184,38 @@ final class CardSlotView: NSView, NSDraggingSource {
         onClear?(side, globalIndex)
     }
 
+    // The artwork and number labels are decorative. Keep mouse selection and
+    // drag initiation on the parent slot rather than on those child views.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        super.hitTest(point) == nil ? nil : self
+    }
+
+    override var acceptsFirstResponder: Bool { true }
+
+    private func selectForKeyboardEditing() {
+        onSelect?(side, globalIndex)
+        window?.makeFirstResponder(self)
+    }
+
     override func mouseDown(with event: NSEvent) {
         dragStarted = false
-        super.mouseDown(with: event)
+        selectForKeyboardEditing()
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        selectForKeyboardEditing()
+        super.rightMouseDown(with: event)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        let blockedModifiers: NSEvent.ModifierFlags = [.command, .control, .option]
+        let isDeleteKey = event.keyCode == 51 || event.keyCode == 117
+        if isSelected && isDeleteKey
+            && event.modifierFlags.intersection(blockedModifiers).isEmpty {
+            clearSlot()
+            return
+        }
+        super.keyDown(with: event)
     }
 
     override func mouseDragged(with event: NSEvent) {
@@ -430,6 +467,7 @@ final class MainWindowController: NSWindowController {
         set { deck.cards = newValue }
     }
     private var highlightedPairIndex: Int?
+    private var selectedSlot: (side: PnPCardSide, index: Int)?
     private var temporaryOutputs: [URL] = []
     private var currentSheet = 0
 
@@ -620,7 +658,7 @@ final class MainWindowController: NSWindowController {
         nav.addArrangedSubview(nextButton)
 
         let navHelp = NSTextField(
-            labelWithString: "Drop PDFs or image files directly onto any numbered slot. Multi-page PDFs continue from that slot."
+            labelWithString: "Drop PDF/images on slots; click a slot and press Delete to clear it."
         )
         navHelp.textColor = .secondaryLabelColor
         navHelp.font = NSFont.systemFont(ofSize: 11)
@@ -770,6 +808,10 @@ final class MainWindowController: NSWindowController {
         for visualIndex in 0..<9 {
             for preview in [frontPreview, backPreview] {
                 let slot = preview.slot(at: visualIndex)
+                slot.onSelect = { [weak self] side, index in
+                    self?.selectedSlot = (side: side, index: index)
+                    self?.updateLinkedHighlight()
+                }
                 slot.onExternalDrop = { [weak self] side, index, urls in
                     self?.drop(urls: urls, on: side, at: index)
                 }
@@ -1026,11 +1068,17 @@ final class MainWindowController: NSWindowController {
     }
 
     private func updateLinkedHighlight() {
+        let selectedPairIndex = selectedSlot?.index
         for visualIndex in 0..<9 {
             for preview in [frontPreview, backPreview] {
                 let slot = preview.slot(at: visualIndex)
+                slot.setSelected(
+                    selectedSlot?.side == slot.side
+                    && selectedSlot?.index == slot.globalIndex
+                )
                 slot.setLinkedHighlight(
-                    highlightedPairIndex != nil && slot.globalIndex == highlightedPairIndex
+                    (highlightedPairIndex != nil && slot.globalIndex == highlightedPairIndex)
+                    || (selectedPairIndex != nil && slot.globalIndex == selectedPairIndex)
                 )
             }
         }
@@ -1038,6 +1086,9 @@ final class MainWindowController: NSWindowController {
 
     private func refresh() {
         let start = currentSheet * 9
+        if let selectedSlot, !(start..<(start + 9)).contains(selectedSlot.index) {
+            self.selectedSlot = nil
+        }
         let flip = selectedDuplexFlip
 
         for visualSlot in 0..<9 {
