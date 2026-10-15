@@ -60,6 +60,7 @@ h1{font-size:34px}.box{border:1px solid #9996;border-radius:12px;padding:18px 22
 <li>For PDFs divided into two equal halves, choose <strong>Import First Half / Second Half…</strong>.</li>
 <li>For a single shared back, import fronts then choose <strong>Repeat One Back…</strong>.</li>
 <li>Drag numbered slots to rearrange cards. Leave the front/back lock on to move pairs together, or switch it off to rearrange one side independently.</li>
+<li>Click a card slot to select it and press <strong>Delete</strong> or <strong>Backspace</strong> to clear just that side; you can also right-click and choose <strong>Clear This Slot</strong>. Use Undo to restore a cleared slot.</li>
 <li>Choose Poker, Bridge, Euro, Tarot, 2.5-inch Square, source-page, or custom finished card size.</li>
 <li>Choose Fit or Fill artwork, PDF page box and optional 3 mm bleed.</li>
 <li>Choose US Letter or A4 and edge-only or full-page cut lines.</li>

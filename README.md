@@ -4,7 +4,7 @@ A native macOS print-and-play layout utility for building duplex-ready **3×3 ca
 
 ## Current development build
 
-**v0.3.0 (pre-release, pending real-printer validation)** adds Tarot and square presets, print-space/preview sharing, PDF box selection, bleed gutters, Fit/Fill, image DPI handling, mismatch warnings, linked hover highlights, Undo/Redo, a repeated common back, and first-half/second-half PDF importing.
+**v0.3.1 (pre-release, pending real-printer validation)** adds Tarot and square presets, print-space/preview sharing, PDF box selection, bleed gutters, Fit/Fill, image DPI handling, mismatch warnings, linked hover highlights, Undo/Redo, a repeated common back, and first-half/second-half PDF importing.
 
 See [BACKLOG.md](BACKLOG.md) for completed work, remaining features, print-test requirements, and known limitations.
 
@@ -41,7 +41,7 @@ The **Lock corresponding fronts and backs while rearranging** switch is on by de
 - **On:** moving either side moves the whole front/back pair.
 - **Off:** fronts and backs can be reordered independently.
 
-Right-click a slot and choose **Clear This Slot** to remove its contents.
+Click a slot to select it (blue outline), then press **Delete** or **Backspace** to clear just that front or back. You can also right-click and choose **Clear This Slot**. Clearing one side keeps its paired other side, regardless of the reordering lock, and supports Undo.
 
 ## Card sizes
 

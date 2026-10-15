@@ -2,7 +2,7 @@
 
 This is the **project backlog**, the working list of improvements, defects, validation, and ideas. Checkboxes describe implementation state, not a claim of real-printer verification. Priority is relative to the next public release.
 
-## Implemented in v0.3.0 source (requires physical print validation)
+## Implemented in v0.3.1 source (requires physical print validation)
 
 - [x] Shared PDF-point sheet layout for preview and export, including the same trim-line segments.
 - [x] Artwork bounds selector: Automatic / TrimBox / CropBox / BleedBox / MediaBox.
@@ -38,7 +38,8 @@ This is the **project backlog**, the working list of improvements, defects, vali
 
 - [ ] Whole-deck Cards view with drag reorder, bulk select and search (in addition to 9-up Sheets view).
 - [ ] Better drag indicators distinguishing **insert**, **swap** and **replace**; expose a deliberate choice for occupied slots.
-- [ ] Clear/Replace controls visible on card hover, plus keyboard Delete/Backspace.
+- [x] Click a front or back slot and press Delete/Backspace to clear that slot, with visual selection and Undo support.
+- [ ] Clear/Replace buttons visible on card hover; context menu remains available.
 - [ ] Show front/back pair identifiers in a status inspector rather than permanently covering artwork with source labels.
 - [ ] Import chooser explaining Fronts, Backs, Alternating, First-Half/Second-Half and Repeat Back before importing.
 - [ ] An error panel listing exact unreadable files, invalid pages, wrong-sized pages, and missing backs.

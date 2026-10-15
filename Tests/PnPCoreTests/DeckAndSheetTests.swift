@@ -127,6 +127,23 @@ final class DeckAndSheetTests: XCTestCase {
         XCTAssertEqual(unlocked.cards[2].back, asset(12))
     }
 
+    func testClearSelectedSidePreservesCorrespondingOtherSideAndCanUndo() {
+        let front = asset(0)
+        let back = asset(1)
+        var deck = PnPDeck(cards: [PnPCardPair(front: front, back: back)])
+        let undoSnapshot = deck
+
+        // Both the context menu and Delete/Backspace invoke the same clear
+        // operation on one side of the card, regardless of the drag pair-lock.
+        deck.put(nil, side: .front, at: 0)
+        XCTAssertNil(deck.cards[0].front)
+        XCTAssertEqual(deck.cards[0].back, back)
+
+        deck = undoSnapshot
+        XCTAssertEqual(deck.cards[0].front, front)
+        XCTAssertEqual(deck.cards[0].back, back)
+    }
+
     func testSnapshotRestoreForUndo() {
         var deck = PnPDeck(cards: [PnPCardPair(front: asset(0), back: asset(1))])
         let before = deck
