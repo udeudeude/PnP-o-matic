@@ -553,6 +553,7 @@ final class MainWindowController: NSWindowController {
         action: nil
     )
     private var pdfPreviewController: NSWindowController?
+    private var lastExactPreviewURL: URL?
 
     init() {
         frontPreview = PreviewGrid(
@@ -1320,6 +1321,128 @@ final class MainWindowController: NSWindowController {
         exactPreviewButton.isEnabled = makeButton.isEnabled
     }
 
+    /// This is the single export path for both exact preview and final output.
+    /// The preview displays this PDF itself, not a reconstructed approximation.
+    private func renderPDF() throws -> (url: URL, result: PnPResult) {
+        let paper = PnPPaperSize.allCases[paperPopup.indexOfSelectedItem]
+        let cutStyle: PnPCutStyle = cutPopup.indexOfSelectedItem == 0 ? .edgeMarks : .fullLines
+        let cardSizePreset = PnPCardSizePreset.allCases[cardSizePopup.indexOfSelectedItem]
+
+        var customCardSize: CGSize?
+        if cardSizePreset == .custom {
+            guard let width = Double(customWidthField.stringValue),
+                  let height = Double(customHeightField.stringValue),
+                  width.isFinite, height.isFinite,
+                  width > 0, height > 0 else {
+                throw PnPError.invalidCardSize
+            }
+            let pointsPerUnit: Double = customUnitPopup.indexOfSelectedItem == 0
+                ? 72 : 72 / 25.4
+            customCardSize = CGSize(
+                width: CGFloat(width * pointsPerUnit),
+                height: CGFloat(height * pointsPerUnit)
+            )
+        }
+
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PnP-o-matic", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory, withIntermediateDirectories: true
+        )
+
+        let outputURL = directory.appendingPathComponent(
+            "PnP-o-matic-\(UUID().uuidString).pdf"
+        )
+        do {
+            let result = try PnPImposer.impose(
+                fronts: pairs.map(\.front),
+                backs: pairs.map(\.back),
+                outputURL: outputURL,
+                paperSize: paper,
+                orientation: selectedOrientation,
+                cutStyle: cutStyle,
+                cardSizePreset: cardSizePreset,
+                customCardSize: customCardSize,
+                duplexFlip: selectedDuplexFlip,
+                fit: selectedFit,
+                artworkBounds: selectedArtworkBounds,
+                bleed: selectedBleed
+            )
+            temporaryOutputs.append(outputURL)
+            return (outputURL, result)
+        } catch {
+            try? FileManager.default.removeItem(at: outputURL)
+            throw error
+        }
+    }
+
+    @objc private func previewExactPDF() {
+        do {
+            let output = try renderPDF()
+            guard let document = PDFDocument(url: output.url), document.pageCount > 0 else {
+                throw PnPError.unreadablePDF(output.url)
+            }
+
+            let previewWindow = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 740, height: 850),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                backing: .buffered, defer: false
+            )
+            previewWindow.title = "Exact Print Preview — PnP-o-matic"
+            previewWindow.minSize = NSSize(width: 450, height: 450)
+            previewWindow.center()
+
+            let pdfView = PDFView(frame: .zero)
+            pdfView.translatesAutoresizingMaskIntoConstraints = false
+            pdfView.document = document
+            pdfView.displayMode = .singlePageContinuous
+            pdfView.autoScales = true
+            pdfView.displaysPageBreaks = true
+            pdfView.backgroundColor = .windowBackgroundColor
+
+            let hint = NSTextField(
+                labelWithString: "Actual generated PDF • \(document.pageCount) pages • front/back sheets alternate. Print at 100%."
+            )
+            hint.textColor = .secondaryLabelColor
+            hint.font = NSFont.systemFont(ofSize: 11)
+
+            let openButton = NSButton(
+                title: "Open in Preview",
+                target: self,
+                action: #selector(openExactPreviewInPreview)
+            )
+            let toolbar = NSStackView(views: [hint, openButton])
+            toolbar.orientation = .horizontal
+            toolbar.spacing = 12
+            toolbar.edgeInsets = NSEdgeInsets(top: 9, left: 12, bottom: 9, right: 12)
+            toolbar.translatesAutoresizingMaskIntoConstraints = false
+
+            guard let content = previewWindow.contentView else { return }
+            content.addSubview(pdfView)
+            content.addSubview(toolbar)
+            NSLayoutConstraint.activate([
+                toolbar.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+                toolbar.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+                toolbar.topAnchor.constraint(equalTo: content.topAnchor),
+                pdfView.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+                pdfView.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+                pdfView.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+                pdfView.bottomAnchor.constraint(equalTo: content.bottomAnchor)
+            ])
+            lastExactPreviewURL = output.url
+            pdfPreviewController = NSWindowController(window: previewWindow)
+            pdfPreviewController?.showWindow(self)
+            previewWindow.makeKeyAndOrderFront(self)
+        } catch {
+            showAlert(message: "Could not preview PDF", detail: error.localizedDescription)
+        }
+    }
+
+    @objc private func openExactPreviewInPreview() {
+        guard let lastExactPreviewURL else { return }
+        openInPreview(lastExactPreviewURL)
+    }
+
     @objc private func makePDF() {
         let hasFronts = deck.cards.contains { $0.front != nil }
         let hasBacks = deck.cards.contains { $0.back != nil }
@@ -1331,69 +1454,13 @@ final class MainWindowController: NSWindowController {
             alert.addButton(withTitle: "Cancel")
             guard alert.runModal() == .alertFirstButtonReturn else { return }
         }
-
-        let paper = PnPPaperSize.allCases[paperPopup.indexOfSelectedItem]
-        let cutStyle: PnPCutStyle = cutPopup.indexOfSelectedItem == 0 ? .edgeMarks : .fullLines
-        let cardSizePreset = PnPCardSizePreset.allCases[cardSizePopup.indexOfSelectedItem]
-
-        var customCardSize: CGSize?
-        if cardSizePreset == .custom {
-            guard let width = Double(customWidthField.stringValue),
-                  let height = Double(customHeightField.stringValue),
-                  width > 0,
-                  height > 0 else {
-                showAlert(
-                    message: "Invalid custom card size",
-                    detail: "Enter positive numbers for width and height."
-                )
-                return
-            }
-
-            let pointsPerUnit: Double = customUnitPopup.indexOfSelectedItem == 0
-                ? 72
-                : 72 / 25.4
-            customCardSize = CGSize(
-                width: CGFloat(width * pointsPerUnit),
-                height: CGFloat(height * pointsPerUnit)
-            )
-        }
-
-        let outputDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("PnP-o-matic", isDirectory: true)
-
         do {
-            try FileManager.default.createDirectory(
-                at: outputDirectory,
-                withIntermediateDirectories: true
-            )
-
-            let outputURL = outputDirectory.appendingPathComponent(
-                "PnP-o-matic-\(UUID().uuidString).pdf"
-            )
-
-            let result = try PnPImposer.impose(
-                fronts: pairs.map(\.front),
-                backs: pairs.map(\.back),
-                outputURL: outputURL,
-                paperSize: paper,
-                cutStyle: cutStyle,
-                cardSizePreset: cardSizePreset,
-                customCardSize: customCardSize,
-                duplexFlip: selectedDuplexFlip,
-                fit: selectedFit,
-                artworkBounds: selectedArtworkBounds,
-                bleed: selectedBleed
-            )
-            temporaryOutputs.append(outputURL)
-
-            let percent = Int((result.scale * 100).rounded())
-            statusLabel.stringValue = "Created \(result.sheetCount) card sheet pair(s) • \(percent)% • opening Preview"
-            openInPreview(outputURL)
+            let output = try renderPDF()
+            let percent = Int((output.result.scale * 100).rounded())
+            statusLabel.stringValue = "Created \(output.result.sheetCount) card sheet pair(s) • \(percent)% • opening Preview"
+            openInPreview(output.url)
         } catch {
-            showAlert(
-                message: "Could not make 9-Up PDF",
-                detail: error.localizedDescription
-            )
+            showAlert(message: "Could not make 9-Up PDF", detail: error.localizedDescription)
         }
     }
 
